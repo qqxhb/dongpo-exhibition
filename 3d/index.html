@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>东坡 · 苏轼诗词展 · 3D 展厅</title>
+<meta name="description" content="东坡 · 苏轼诗词展的可走进 3D 展厅：六幕、十五首诗词与两篇文，环绕一室，可行走、可近读。">
+<meta name="theme-color" content="#090a0b">
+<link rel="stylesheet" href="hall.css">
+</head>
+<body>
+<canvas id="hall" aria-label="东坡诗词 3D 展厅"></canvas>
+
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="hud">
+  <div class="brand">
+    <p class="brand-kicker">东坡 · 苏轼诗词展</p>
+    <h1 class="brand-title">可走进的展厅</h1>
+  </div>
+  <div class="hud-actions">
+    <button class="hud-btn" id="btnIndex" type="button">目录</button>
+    <button class="hud-btn" id="btnHelp" type="button">操作</button>
+  </div>
+</header>
+
+<div class="reticle" id="reticle" aria-hidden="true"></div>
+
+<button class="prompt" id="prompt" type="button" hidden>
+  <span class="prompt-body">
+    <span class="prompt-title" id="promptTitle">—</span>
+    <span class="prompt-meta" id="promptMeta">—</span>
+  </span>
+  <span class="prompt-key"><b>E</b><span>近读</span></span>
+</button>
+
+<p class="hint" id="hint">W A S D 行走 · 拖拽转视角 · E 近读 · Esc 退出</p>
+
+<div class="dpad" id="dpad" aria-hidden="true">
+  <button class="dpad-btn up" data-move="forward" type="button" aria-label="前进">↑</button>
+  <button class="dpad-btn left" data-move="left" type="button" aria-label="左移">←</button>
+  <button class="dpad-btn down" data-move="back" type="button" aria-label="后退">↓</button>
+  <button class="dpad-btn right" data-move="right" type="button" aria-label="右移">→</button>
+</div>
+
+<p class="fallback-tip" id="fallbackTip" hidden>当前浏览器未能启用 WebGL。可以先用「平面阅读」浏览全部展品。</p>
+
+<!-- 入口 -->
+<div class="start" id="start">
+  <div class="start-inner">
+    <p class="start-kicker">东坡 · 苏轼诗词展 <i></i> 3D 展厅</p>
+    <h1 class="start-title">走进东坡的<br>山水与月色</h1>
+    <p class="start-sub">六幕 · 十五首诗词 · 两篇文<br>一厅之内，从眉山走到儋州</p>
+    <ul class="start-keys">
+      <li><b>W A S D</b><span>行走</span></li>
+      <li><b>拖拽鼠标</b><span>转动视角</span></li>
+      <li><b>E</b><span>靠近后近读</span></li>
+      <li><b>Esc</b><span>退出阅读</span></li>
+    </ul>
+    <div class="start-actions">
+      <button class="btn btn-solid" id="btnEnter" type="button">进入 3D 展厅</button>
+      <button class="btn" id="btnFlat" type="button">纯文字浏览</button>
+    </div>
+    <p class="start-choose">「进入 3D 展厅」是 3D 漫游，可用键盘走动、拖拽转视角；<br>「纯文字浏览」不加载 3D 画面，直接按章节读全部诗文。</p>
+    <p class="start-note">触屏：单指拖动转视角，左下方向键行走，点提示条近读。<br>本页依赖已随附在本地的 three.js，无需联网。</p>
+  </div>
+</div>
+
+<!-- 纯文字浏览（无 3D） -->
+<section class="flat" id="flat" aria-hidden="true">
+  <div class="flat-inner">
+    <header class="flat-head">
+      <div>
+        <p class="flat-kicker">东坡 · 苏轼诗词展</p>
+        <h1 class="flat-title">纯文字浏览</h1>
+      </div>
+      <button class="btn btn-solid" id="btnEnter3D" type="button">进入 3D 展厅</button>
+    </header>
+    <div class="flat-grid">
+      <nav class="flat-nav" id="flatNav" aria-label="展品目录"></nav>
+      <article class="flat-article" id="flatArticle"></article>
+    </div>
+  </div>
+</section>
+
+<!-- 近读 -->
+<div class="reader" id="reader" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="readerTitle">
+  <div class="reader-card">
+    <button class="reader-close" id="btnCloseReader" type="button" aria-label="关闭阅读">×</button>
+    <p class="reader-kicker" id="readerKicker"></p>
+    <h2 class="reader-title" id="readerTitle"></h2>
+    <div class="reader-verse" id="readerVerse"></div>
+    <p class="reader-note" id="readerNote"></p>
+    <div class="reader-foot">
+      <span class="reader-seal" aria-hidden="true">東坡</span>
+      <button class="btn btn-ghost" id="btnBack" type="button">返回展厅 · Esc</button>
+    </div>
+  </div>
+</div>
+
+<!-- 目录 / 平面阅读 -->
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-label="展览目录">
+    <div class="drawer-head">
+      <p>展览目录 <span>六幕 · 十七件</span></p>
+      <button class="drawer-close" id="btnCloseIndex" type="button" aria-label="关闭目录">×</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <p class="drawer-foot">点击展品，会走到它面前并展开全文。仅浏览文字也可用此目录。</p>
+  </div>
+</div>
+
+<!-- 操作说明 -->
+<div class="help" id="help" aria-hidden="true">
+  <div class="help-card" role="dialog" aria-modal="true" aria-label="操作说明">
+    <div class="help-head">
+      <p>漫游方式</p>
+      <button class="drawer-close" id="btnCloseHelp" type="button" aria-label="关闭说明">×</button>
+    </div>
+    <dl class="help-list">
+      <dt>W / A / S / D</dt><dd>前后左右行走，按住 Shift 走快一些</dd>
+      <dt>↑ / ↓ / ← / →</dt><dd>同样可以行走</dd>
+      <dt>拖拽画面</dt><dd>转动视角；点击画面可近距离阅读</dd>
+      <dt>E</dt><dd>靠近展品、出现提示时，展开全文</dd>
+      <dt>Esc</dt><dd>退出阅读 / 关闭面板</dd>
+      <dt>目录</dt><dd>随时跳到任意展品，或只读文字</dd>
+    </dl>
+    <p class="help-note">展厅中央的碑，是《自题金山画像》。四周八面墙，依次是序章、湖山、赤壁、庐山、岭南。</p>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="data.js"></script>
+<script src="hall.js"></script>
+</body>
+</html>
