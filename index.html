@@ -1,0 +1,3549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>东坡 · 苏轼诗词展</title>
+<meta name="description" content="苏轼诗词线上展览：从雪泥鸿爪到黄州赤壁，从惠州到儋州，十五首诗词与两篇文，串起他的一生。">
+<meta name="theme-color" content="#0a0b0c">
+<script>document.documentElement.className += ' js';</script>
+<style>
+/* ============================================================
+   东坡 · 苏轼诗词展
+   单文件站点 / 无外部依赖 / 系统宋体优先
+   ============================================================ */
+
+/* ---------- 1. 设计变量 ---------- */
+:root{
+  --bg:#090a0b;
+  --bg-2:#0d0f10;
+  --paper:#eae4d7;
+  --paper-2:#cfc8b8;
+  --dim:rgba(234,228,215,.60);
+  --faint:rgba(234,228,215,.32);
+  --line:rgba(234,228,215,.13);
+  --line-2:rgba(234,228,215,.26);
+  --gold:#c7ac7c;
+  --gold-soft:rgba(199,172,124,.16);
+  --seal:#a83a2c;
+  --ambient:#1b2427;
+
+  --font-serif:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","Source Han Serif CN","SimSun",serif;
+  --font-kai:"Kaiti SC","STKaiti","KaiTi","Noto Serif CJK SC","Songti SC",serif;
+  --font-sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",sans-serif;
+  --font-latin:"Didot","Bodoni 72","Playfair Display",Georgia,"Times New Roman",serif;
+
+  --ease:cubic-bezier(.22,.68,.18,1);
+  --pad:clamp(20px,4.6vw,64px);
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+
+html{
+  -webkit-text-size-adjust:100%;
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--paper);
+  font-family:var(--font-serif);
+  font-kerning:normal;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+body.lock{overflow:hidden;}
+
+::selection{background:rgba(199,172,124,.28);color:#fff;}
+
+a{color:inherit;text-decoration:none;}
+
+button{
+  font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;
+}
+
+:focus-visible{
+  outline:1px solid var(--gold);
+  outline-offset:6px;
+}
+
+/* ---------- 2. 氛围底层 ---------- */
+.ambient{
+  position:fixed;
+  left:50%;top:-18vh;
+  width:130vw;height:85vh;
+  transform:translateX(-50%);
+  background:var(--ambient);
+  opacity:.30;
+  filter:blur(110px);
+  transition:background 1.8s var(--ease);
+  pointer-events:none;
+  z-index:0;
+}
+
+.vignette{
+  position:fixed;inset:0;
+  pointer-events:none;z-index:1;
+  background:
+    radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(0,0,0,.55) 100%);
+}
+
+.grain{
+  position:fixed;inset:-20%;
+  z-index:90;
+  pointer-events:none;
+  opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grainShift 8s steps(6) infinite;
+}
+
+@keyframes grainShift{
+  0%{transform:translate(0,0)}
+  20%{transform:translate(-2%,1%)}
+  40%{transform:translate(1%,-2%)}
+  60%{transform:translate(-1%,-1%)}
+  80%{transform:translate(2%,1%)}
+  100%{transform:translate(0,0)}
+}
+
+main,.topbar,.rail,.menu,.draw{position:relative;z-index:2;}
+
+/* ---------- 3. 通用文字 ---------- */
+.kicker{
+  font-family:var(--font-sans);
+  font-size:10.5px;
+  font-weight:400;
+  letter-spacing:.34em;
+  color:var(--faint);
+  text-transform:uppercase;
+  margin:0;
+}
+
+.num{
+  font-family:var(--font-latin);
+  font-feature-settings:"tnum";
+  letter-spacing:.08em;
+}
+
+/* ---------- 4. 顶栏 ---------- */
+.topbar{
+  position:fixed;top:0;left:0;right:0;
+  z-index:70;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:clamp(16px,2.4vw,28px) var(--pad);
+  transition:background .6s var(--ease), backdrop-filter .6s;
+}
+
+.topbar::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to bottom, rgba(9,10,11,.92), rgba(9,10,11,0));
+  opacity:0;transition:opacity .5s;
+  pointer-events:none;
+}
+.topbar.scrolled::before{opacity:1;}
+
+.brand{
+  display:flex;align-items:center;gap:14px;
+  position:relative;z-index:2;
+}
+.brand-txt{display:flex;flex-direction:column;gap:3px;}
+.brand-cn{
+  font-size:13px;letter-spacing:.32em;color:var(--paper);
+}
+.brand-en{
+  font-family:var(--font-sans);
+  font-size:9px;letter-spacing:.24em;color:var(--faint);
+}
+
+.seal{
+  display:grid;place-items:center;
+  width:34px;height:34px;
+  background:var(--seal);
+  color:#f7f0e2;
+  font-family:var(--font-serif);
+  font-size:10px;
+  line-height:1.05;
+  letter-spacing:.02em;
+  writing-mode:vertical-rl;
+  text-orientation:upright;
+  border-radius:2px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22), 0 4px 18px rgba(168,58,44,.25);
+  transform:rotate(-4deg);
+  user-select:none;
+}
+
+.menu-btn{
+  display:flex;align-items:center;gap:12px;
+  position:relative;z-index:2;
+  padding:8px 0 8px 12px;
+}
+.menu-btn span{
+  font-family:var(--font-sans);
+  font-size:11px;letter-spacing:.3em;color:var(--paper);
+}
+.bars{display:flex;flex-direction:column;gap:5px;width:22px;}
+.bars i{
+  display:block;height:1px;width:100%;
+  background:var(--paper);opacity:.75;
+  transition:transform .5s var(--ease), opacity .4s;
+  transform-origin:center;
+}
+.menu-btn[aria-expanded="true"] .bars i:first-child{transform:translateY(3px) rotate(45deg);}
+.menu-btn[aria-expanded="true"] .bars i:last-child{transform:translateY(-3px) rotate(-45deg);}
+
+/* ---------- 5. 目次覆盖层 ---------- */
+.menu{
+  position:fixed;inset:0;z-index:65;
+  background:rgba(8,9,10,.94);
+  -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
+  display:flex;align-items:center;
+  overflow-y:auto;
+  padding:clamp(80px,12vh,140px) var(--pad) clamp(40px,8vh,80px);
+  clip-path:inset(0 0 100% 0);
+  visibility:hidden;
+  transition:clip-path .8s var(--ease), visibility 0s .8s;
+}
+.menu.open{
+  clip-path:inset(0 0 0 0);
+  visibility:visible;
+  transition:clip-path .8s var(--ease), visibility 0s;
+}
+
+.menu-inner{width:100%;max-width:1120px;margin:0 auto;}
+.menu-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-bottom:26px;border-bottom:1px solid var(--line);
+}
+.menu-head p{margin:0;}
+.menu-head .cn{font-size:13px;letter-spacing:.4em;color:var(--dim);}
+.menu-head .en{font-family:var(--font-sans);font-size:9px;letter-spacing:.3em;color:var(--faint);}
+
+.menu-list{list-style:none;margin:0;padding:0;}
+.menu-item{
+  opacity:0;transform:translateY(18px);
+  transition:opacity .6s var(--ease), transform .6s var(--ease);
+}
+.menu-item a{
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) auto;
+  align-items:baseline;
+  gap:clamp(12px,3vw,40px);
+  padding:clamp(10px,1.8vh,20px) 0;
+  border-bottom:1px solid var(--line);
+}
+.menu.open .menu-item{opacity:1;transform:none;}
+.menu.open .menu-item:nth-child(1){transition-delay:.14s}
+.menu.open .menu-item:nth-child(2){transition-delay:.20s}
+.menu.open .menu-item:nth-child(3){transition-delay:.26s}
+.menu.open .menu-item:nth-child(4){transition-delay:.32s}
+.menu.open .menu-item:nth-child(5){transition-delay:.38s}
+.menu.open .menu-item:nth-child(6){transition-delay:.44s}
+
+.menu-item .m-no{
+  font-family:var(--font-latin);
+  font-size:11px;letter-spacing:.18em;color:var(--faint);
+}
+.menu-item .m-cn{
+  font-size:clamp(26px,3.6vw,44px);
+  letter-spacing:.14em;
+  color:var(--paper-2);
+  transition:color .4s, letter-spacing .6s var(--ease);
+}
+.menu-item .m-meta{
+  font-family:var(--font-sans);
+  font-size:10.5px;letter-spacing:.22em;color:var(--faint);
+  text-align:right;
+}
+.menu-item:hover .m-cn{color:var(--paper);letter-spacing:.2em;}
+.menu-item:hover .m-no{color:var(--gold);}
+
+.menu-foot{
+  display:flex;justify-content:space-between;
+  margin-top:clamp(20px,4vh,36px);
+  font-family:var(--font-sans);font-size:10px;letter-spacing:.24em;color:var(--faint);
+}
+
+/* ---------- 6. 左侧进度轨 ---------- */
+.rail{
+  position:fixed;left:clamp(14px,2vw,30px);top:50%;
+  transform:translateY(-50%);
+  z-index:45;
+  display:flex;flex-direction:column;align-items:center;
+  gap:0;
+}
+.rail-line{
+  position:absolute;left:50%;top:-46px;bottom:-46px;width:1px;
+  background:var(--line);
+  transform:translateX(-50%);
+}
+.rail-fill{
+  position:absolute;left:50%;top:-46px;width:1px;height:calc(100% + 92px);
+  background:linear-gradient(to bottom, transparent, var(--gold) 12%, var(--gold));
+  transform:translateX(-50%) scaleY(var(--progress,0));
+  transform-origin:top;
+  opacity:.75;
+}
+.rail a{
+  position:relative;
+  width:28px;height:44px;
+  display:grid;place-items:center;
+}
+.rail a::before{
+  content:"";width:4px;height:4px;border-radius:50%;
+  background:rgba(234,228,215,.28);
+  transition:background .4s, transform .4s, box-shadow .4s;
+}
+.rail a.active::before{
+  background:var(--gold);
+  transform:scale(1.5);
+  box-shadow:0 0 14px rgba(199,172,124,.85);
+}
+.rail .lbl{
+  position:absolute;left:30px;
+  font-family:var(--font-sans);font-size:9.5px;letter-spacing:.3em;
+  color:var(--dim);white-space:nowrap;
+  opacity:0;transform:translateX(-6px);
+  transition:opacity .35s, transform .35s;
+}
+.rail a:hover .lbl{opacity:1;transform:none;}
+
+/* ---------- 7. 首屏 ---------- */
+.hero{
+  position:relative;
+  min-height:100vh;
+  min-height:100svh;
+  display:flex;flex-direction:column;justify-content:center;
+  overflow:hidden;
+  padding:0 var(--pad);
+}
+
+#mist{
+  position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;z-index:1;
+}
+
+.hero-grid{
+  position:absolute;inset:0;z-index:0;
+  background-image:repeating-linear-gradient(90deg, rgba(234,228,215,.05) 0 1px, transparent 1px 12.5%);
+  -webkit-mask-image:linear-gradient(to bottom, transparent, #000 25%, #000 62%, transparent 92%);
+  mask-image:linear-gradient(to bottom, transparent, #000 25%, #000 62%, transparent 92%);
+  opacity:.7;
+}
+
+.moon{
+  position:absolute;
+  right:4%;top:9%;
+  width:min(19vw,260px);
+  aspect-ratio:1;
+  border-radius:50%;
+  z-index:1;
+  opacity:.72;
+  transform:translate3d(calc(var(--mx,0) * 14px), calc(var(--my,0) * 12px), 0);
+  transition:transform 1.4s var(--ease);
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(251,247,236,.99) 0%,
+      rgba(247,241,228,.99) 96%,
+      rgba(240,232,214,0) 100%);
+  filter:blur(.4px);
+  box-shadow:0 0 100px 4px rgba(238,232,214,.10), 0 0 240px 80px rgba(200,214,214,.05);
+}
+
+.hero-main{
+  position:relative;z-index:3;
+  margin-top:2vh;
+  transform:translate3d(calc(var(--mx,0) * -6px), calc(var(--my,0) * -5px), 0);
+  transition:transform 1.4s var(--ease);
+}
+
+.hero-main .kicker{margin-bottom:clamp(14px,3vh,30px);opacity:0;animation:fadeUp 1.1s var(--ease) .1s forwards;}
+
+.hero-line{
+  display:flex;
+  align-items:flex-end;
+  gap:clamp(14px,2.2vw,34px);
+}
+
+.hero-title{
+  display:flex;
+  margin:0;
+  font-size:clamp(104px,20vw,292px);
+  font-weight:500;
+  line-height:.9;
+  letter-spacing:.02em;
+  color:#eee8da;
+  text-shadow:0 14px 70px rgba(0,0,0,.6);
+}
+.hero-title span{
+  display:block;
+  opacity:0;
+  transform:translateY(.14em);
+  filter:blur(7px);
+  animation:titleIn 1.6s var(--ease) forwards;
+}
+.hero-title span:nth-child(1){animation-delay:.18s;}
+.hero-title span:nth-child(2){animation-delay:.3s;}
+
+@keyframes titleIn{
+  to{opacity:1;transform:none;filter:blur(0);}
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:none}
+}
+
+.hero-sub{
+  margin:clamp(20px,3.4vh,38px) 0 0;
+  font-size:clamp(15px,1.55vw,21px);
+  letter-spacing:.42em;
+  color:var(--dim);
+  opacity:0;
+  animation:fadeUp 1.1s var(--ease) .55s forwards;
+}
+.hero-sub::before{
+  content:"";display:inline-block;
+  width:clamp(24px,4vw,64px);height:1px;
+  background:var(--line-2);
+  vertical-align:middle;
+  margin-right:clamp(12px,1.6vw,22px);
+}
+
+.hero-verse{
+  position:absolute;
+  right:var(--pad);
+  bottom:23%;
+  z-index:3;
+  writing-mode:vertical-rl;
+  display:flex;flex-direction:column;gap:20px;
+  opacity:0;
+  animation:fadeUp 1.3s var(--ease) .95s forwards;
+}
+.hero-verse p{
+  margin:0;
+  font-size:clamp(12px,1.05vw,15px);
+  letter-spacing:.4em;
+  line-height:1.9;
+  color:var(--dim);
+}
+.hero-verse span{
+  font-family:var(--font-sans);
+  font-size:9px;
+  letter-spacing:.24em;
+  color:var(--faint);
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+
+.hero-seal{
+  width:52px;height:52px;
+  font-size:14px;
+  margin-bottom:.42em;
+  flex:0 0 auto;
+  opacity:0;
+  animation:fadeUp 1s var(--ease) .68s forwards;
+}
+
+.hero-foot{
+  position:absolute;left:var(--pad);right:var(--pad);bottom:calc(var(--pad) * .62);
+  z-index:4;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:20px;
+  font-family:var(--font-sans);
+  font-size:9.5px;
+  letter-spacing:.26em;
+  color:rgba(234,228,215,.46);
+  opacity:0;
+  animation:fadeUp 1.1s var(--ease) .85s forwards;
+}
+.hero-foot p{margin:0;line-height:2;}
+.coord{text-align:right;font-family:var(--font-latin);font-size:10px;letter-spacing:.12em;}
+
+.scroll-cue{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  color:rgba(234,228,215,.5);
+  font-size:9.5px;letter-spacing:.36em;
+  margin-left:auto;margin-right:auto;
+  position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+}
+.scroll-cue i{
+  display:block;width:1px;height:52px;
+  background:linear-gradient(to bottom, var(--line-2), transparent);
+  position:relative;overflow:hidden;
+}
+.scroll-cue i::after{
+  content:"";position:absolute;top:-52px;left:0;width:1px;height:52px;
+  background:linear-gradient(to bottom, transparent, var(--gold));
+  animation:cue 2.6s var(--ease) infinite;
+}
+@keyframes cue{
+  0%{transform:translateY(0)}
+  70%,100%{transform:translateY(104px)}
+}
+
+/* ---------- 8. 序章 ---------- */
+.prologue{
+  position:relative;
+  padding:clamp(100px,16vh,180px) var(--pad) 0;
+}
+.prologue-inner{
+  max-width:1120px;margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+  gap:clamp(32px,6vw,96px);
+  align-items:start;
+}
+.prologue-quote{
+  margin:0;
+  font-size:clamp(26px,3.3vw,44px);
+  line-height:1.75;
+  letter-spacing:.1em;
+  color:var(--paper-2);
+}
+.prologue-quote cite{
+  display:block;
+  margin-top:clamp(18px,3vh,30px);
+  font-family:var(--font-sans);
+  font-style:normal;
+  font-size:10px;letter-spacing:.3em;color:var(--faint);
+}
+.prologue-text{
+  font-size:clamp(13.5px,1.1vw,15px);
+  line-height:2.35;
+  letter-spacing:.06em;
+  color:var(--dim);
+  margin:0;
+}
+.prologue-text + .prologue-text{margin-top:1.4em;}
+.prologue-text strong{color:var(--paper-2);font-weight:400;}
+
+.prologue-meta{
+  display:flex;gap:clamp(18px,4vw,44px);
+  margin-top:clamp(26px,4vh,40px);
+  padding-top:20px;border-top:1px solid var(--line);
+  font-family:var(--font-sans);font-size:9.5px;letter-spacing:.24em;color:var(--faint);
+}
+.prologue-meta b{
+  display:block;font-family:var(--font-latin);font-weight:400;
+  font-size:22px;letter-spacing:.04em;color:var(--paper-2);margin-bottom:6px;
+}
+
+/* 年表 */
+.timeline-wrap{
+  max-width:1120px;margin:clamp(56px,9vh,96px) auto 0;
+}
+.timeline{
+  display:flex;
+  gap:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+  border-top:1px solid var(--line);
+  padding:0 0 6px;
+}
+.timeline::-webkit-scrollbar{display:none;}
+.tl{
+  flex:0 0 auto;
+  width:clamp(112px,10vw,150px);
+  padding:20px 10px 16px 0;
+  position:relative;
+  opacity:.55;
+  transition:opacity .4s;
+}
+.tl:hover{opacity:1;}
+.tl::before{
+  content:"";position:absolute;top:-3px;left:0;
+  width:5px;height:5px;border-radius:50%;
+  background:var(--faint);
+  transition:background .4s, box-shadow .4s;
+}
+.tl:hover::before{background:var(--gold);box-shadow:0 0 12px var(--gold);}
+.tl-year{
+  display:block;
+  font-family:var(--font-latin);font-size:17px;letter-spacing:.06em;
+  color:var(--paper-2);
+}
+.tl-label{
+  display:block;margin-top:7px;
+  font-family:var(--font-sans);font-size:10px;letter-spacing:.18em;color:var(--faint);
+  white-space:nowrap;
+}
+
+/* ---------- 9. 章节 ---------- */
+.chapter{
+  position:relative;
+  padding:0 var(--pad);
+}
+.chapter-head{
+  max-width:1120px;margin:0 auto;
+  padding:clamp(110px,18vh,200px) 0 clamp(20px,4vh,40px);
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-areas:
+    "num title"
+    "num desc";
+  column-gap:clamp(24px,5vw,72px);
+  row-gap:clamp(16px,3vh,26px);
+  border-top:1px solid var(--line);
+  position:relative;
+}
+.ch-num{
+  grid-area:num;
+  font-family:var(--font-latin);
+  font-size:clamp(64px,9vw,132px);
+  line-height:.8;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(234,228,215,.22);
+  padding-top:.06em;
+  user-select:none;
+}
+.ch-title{
+  grid-area:title;
+  margin:0;
+  font-size:clamp(40px,6vw,84px);
+  font-weight:500;
+  letter-spacing:.16em;
+  line-height:1.05;
+  color:var(--paper);
+}
+.ch-title small{
+  display:block;
+  margin-bottom:clamp(10px,2vh,18px);
+  font-family:var(--font-sans);
+  font-size:9.5px;font-weight:400;letter-spacing:.34em;
+  color:var(--faint);
+}
+.ch-desc{
+  grid-area:desc;
+  margin:0;max-width:640px;
+  font-size:clamp(13px,1.05vw,15px);
+  line-height:2.3;letter-spacing:.05em;
+  color:var(--dim);
+}
+.ch-quote{
+  margin:clamp(4px,1vh,10px) 0 0;
+  font-size:clamp(15px,1.4vw,19px);
+  letter-spacing:.18em;
+  color:var(--gold);
+  opacity:.85;
+}
+.ch-coord{
+  position:absolute;right:0;top:clamp(120px,19vh,210px);
+  font-family:var(--font-latin);font-size:10px;letter-spacing:.14em;
+  color:var(--faint);
+  text-align:right;line-height:1.9;
+}
+
+/* ---------- 10. 诗 ---------- */
+.poem{
+  max-width:1120px;margin:0 auto;
+  padding:clamp(64px,11vh,120px) 0;
+  border-top:1px solid var(--line);
+}
+.poem-inner{
+  display:grid;
+  /* 两栏：竖排区 | 标题说明区。两栏之间只有一条真实的列间距，互不侵入 */
+  grid-template-columns:auto minmax(260px,360px);
+  column-gap:clamp(30px,5.5vw,86px);
+  align-items:start;
+  justify-content:center;
+}
+.poem.flip .poem-inner{
+  grid-template-columns:minmax(260px,360px) auto;
+}
+.poem.flip .poem-aside{order:1;}
+.poem.flip .verse-wrap{order:2;}
+
+.verse-wrap{
+  position:relative;
+  padding-right:6px;
+  /* 宽度＝列宽×列数＋列间距，不接受收缩 */
+  width:max-content;
+}
+.verse-wrap::after{
+  content:"";
+  position:absolute;
+  right:-6px;top:0;bottom:0;width:1px;
+  background:linear-gradient(to bottom, transparent, var(--line-2) 8%, var(--line-2) 88%, transparent);
+  transform:scaleY(0);transform-origin:top;
+  transition:transform 1.5s var(--ease) .25s;
+}
+.poem.in .verse-wrap::after{transform:scaleY(1);}
+
+.verse{
+  /* 竖排改成“显式列”：模板里一个 <p> 就是一列，列宽固定为字号倍数，
+     与浏览器/字体的度量无关；容器宽度＝列宽×列数＋间距。
+     第一句在最右，靠 row-reverse 排布，不再依赖 writing-mode 自动分列。 */
+  --col-w:1.62em;   /* 单列宽度，同时是列内行盒宽度，保证字不出列 */
+  --col-gap:.33em;  /* 列间距 */
+  display:flex;
+  flex-direction:row-reverse;
+  align-items:flex-start;
+  gap:calc(var(--col-gap) + 1.15em);   /* 阕与阕之间（在正常列距上再让 1.15em） */
+  font-size:var(--fs,clamp(21px,2.15vw,29px));
+  line-height:var(--col-w);
+  letter-spacing:.14em;
+  color:var(--paper);
+  text-orientation:upright;
+}
+.verse .stanza{
+  display:flex;
+  flex-direction:row-reverse;
+  gap:var(--col-gap);
+}
+.verse p{
+  margin:0;
+  writing-mode:vertical-rl;
+  width:var(--col-w);
+  white-space:nowrap;
+}
+
+.poem-aside{
+  flex:0 1 360px;
+  min-width:260px;
+  padding-top:.2em;
+}
+.poem-kicker{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  margin:0 0 clamp(12px,2vh,20px);
+  font-family:var(--font-sans);
+  font-size:9.5px;letter-spacing:.24em;
+  color:var(--faint);
+}
+.poem-kicker i{
+  display:block;width:14px;height:1px;background:var(--line-2);
+}
+.poem-title{
+  margin:0 0 10px;
+  font-size:clamp(24px,2.35vw,33px);
+  font-weight:500;
+  letter-spacing:.12em;
+  line-height:1.3;
+  color:var(--paper);
+}
+.poem-title span{
+  display:inline-block;
+  font-size:.52em;
+  letter-spacing:.16em;
+  color:var(--dim);
+  vertical-align:.28em;
+  margin-left:.5em;
+}
+.poem-note{
+  margin:clamp(16px,2.6vh,26px) 0 0;
+  font-size:clamp(12.5px,1.02vw,13.5px);
+  line-height:2.15;
+  letter-spacing:.04em;
+  color:var(--dim);
+  max-width:24em;
+  padding-top:clamp(16px,2.4vh,24px);
+  border-top:1px solid var(--line);
+}
+.poem-note em{
+  font-style:normal;
+  color:var(--paper-2);
+}
+.poem .seal{
+  margin-top:clamp(22px,3.4vh,34px);
+  width:38px;height:38px;font-size:11px;
+  opacity:0;transform:rotate(-16deg) scale(1.5);
+  transition:opacity .6s var(--ease), transform .8s var(--ease);
+}
+.poem.in .seal{opacity:.92;transform:rotate(-5deg) scale(1);}
+
+/* 竖排诗句进入 */
+.js .verse p{
+  opacity:0;
+  transform:translateY(-10px);
+  transition:opacity .8s var(--ease), transform .8s var(--ease);
+}
+.js .poem.in .verse p{opacity:1;transform:none;}
+.poem.in .verse p:nth-child(1){transition-delay:.10s}
+.poem.in .verse p:nth-child(2){transition-delay:.16s}
+.poem.in .verse p:nth-child(3){transition-delay:.22s}
+.poem.in .verse p:nth-child(4){transition-delay:.28s}
+.poem.in .verse p:nth-child(5){transition-delay:.34s}
+.poem.in .verse p:nth-child(6){transition-delay:.40s}
+.poem.in .verse p:nth-child(7){transition-delay:.46s}
+.poem.in .verse p:nth-child(8){transition-delay:.52s}
+.poem.in .verse p:nth-child(9){transition-delay:.58s}
+.poem.in .verse p:nth-child(10){transition-delay:.64s}
+.poem.in .verse p:nth-child(11){transition-delay:.70s}
+.poem.in .verse p:nth-child(12){transition-delay:.76s}
+
+/* ---------- 11. 江水间奏 ---------- */
+.interlude{
+  position:relative;
+  height:clamp(380px,62vh,620px);
+  margin:clamp(30px,6vh,60px) calc(var(--pad) * -1);
+  overflow:hidden;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(ellipse 60% 55% at 72% 38%, rgba(120,142,158,.14), transparent 70%),
+    linear-gradient(to bottom, rgba(9,10,11,0), rgba(14,18,20,.7));
+}
+.interlude-text{
+  position:absolute;
+  right:clamp(28px,10vw,140px);
+  top:0;bottom:0;
+  writing-mode:vertical-rl;
+  display:flex;
+  justify-content:center;
+  white-space:nowrap;
+  margin:0;
+  font-size:clamp(52px,8.4vw,112px);
+  letter-spacing:.28em;
+  line-height:1.1;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(234,228,215,.34);
+  user-select:none;
+}
+.interlude-cap{
+  position:absolute;
+  left:clamp(28px,10vw,140px);
+  top:50%;
+  transform:translateY(-50%);
+  margin:0;
+  max-width:16em;
+  font-size:clamp(12px,1.05vw,14px);
+  line-height:2.2;
+  letter-spacing:.14em;
+  color:var(--faint);
+}
+.interlude-cap b{
+  display:block;font-weight:400;color:var(--paper-2);
+  font-size:clamp(15px,1.4vw,18px);letter-spacing:.24em;margin-bottom:14px;
+}
+.water{
+  position:absolute;left:0;right:0;bottom:0;height:46%;
+  background:repeating-linear-gradient(to bottom, rgba(234,228,215,.075) 0 1px, transparent 1px 10px);
+  -webkit-mask-image:linear-gradient(to bottom, transparent, #000 42%, #000 82%, transparent);
+  mask-image:linear-gradient(to bottom, transparent, #000 42%, #000 82%, transparent);
+  animation:flow 22s linear infinite;
+}
+@keyframes flow{to{background-position:0 120px;}}
+.moonpath{
+  position:absolute;left:58%;bottom:8%;
+  width:min(30vw,300px);height:min(9vw,90px);
+  transform:translateX(-50%);
+  background:radial-gradient(ellipse at center, rgba(236,228,206,.30), rgba(236,228,206,0) 70%);
+  filter:blur(6px);
+  opacity:.65;
+}
+
+/* ---------- 12. 寒食帖 ---------- */
+.relic{
+  max-width:1120px;margin:0 auto;
+  padding:clamp(64px,11vh,120px) 0;
+  border-top:1px solid var(--line);
+  display:grid;
+  grid-template-columns:minmax(0,.62fr) minmax(0,1fr);
+  gap:clamp(28px,5vw,72px);
+  align-items:center;
+}
+.relic-info .poem-title{margin-bottom:clamp(16px,2.4vh,24px);}
+.relic-info .poem-note{border-top:0;padding-top:0;max-width:24em;}
+.relic-card{
+  position:relative;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,252,240,.55), transparent 55%),
+    linear-gradient(160deg,#e8dfc9,#d8cfb8 55%,#cfc5ac);
+  color:#2c2721;
+  padding:clamp(28px,3.4vw,48px) clamp(24px,3vw,44px);
+  box-shadow:
+    0 40px 90px rgba(0,0,0,.55),
+    0 2px 0 rgba(255,255,255,.25) inset,
+    0 0 90px rgba(120,100,70,.16) inset;
+  transform:rotate(-.7deg);
+  transition:transform 1s var(--ease);
+}
+.relic-card:hover{transform:rotate(0deg) translateY(-4px);}
+.relic-card::after{
+  content:"";position:absolute;inset:14px;
+  border:1px solid rgba(60,50,36,.16);
+  pointer-events:none;
+}
+.relic-verse{
+  writing-mode:vertical-rl;
+  text-orientation:upright;
+  font-family:var(--font-kai);
+  font-size:clamp(16px,1.5vw,21px);
+  line-height:1.95;
+  letter-spacing:.16em;
+}
+.relic-verse p{margin:0;}
+.relic-verse .sig{
+  margin-block-start:1.4em;
+  font-size:.62em;
+  color:#5b5140;
+  letter-spacing:.14em;
+}
+.relic-seal{
+  position:absolute;right:clamp(26px,3vw,42px);bottom:clamp(26px,3vw,42px);
+  width:40px;height:40px;font-size:11px;
+  opacity:.88;
+}
+.relic-cap{
+  margin:clamp(16px,2.4vh,22px) 0 0;
+  font-family:var(--font-sans);
+  font-size:9.5px;letter-spacing:.22em;color:var(--faint);
+  text-align:right;
+}
+
+/* ---------- 13. 终章 ---------- */
+.coda{
+  position:relative;
+  padding:clamp(110px,18vh,200px) var(--pad) clamp(70px,10vh,110px);
+  text-align:center;
+  overflow:hidden;
+}
+.coda::before{
+  content:"";position:absolute;left:50%;top:48%;
+  width:min(70vw,720px);aspect-ratio:1;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  border:1px solid rgba(234,228,215,.09);
+  box-shadow:0 0 120px rgba(234,228,215,.03) inset;
+  pointer-events:none;
+}
+.coda-inner{position:relative;max-width:1000px;margin:0 auto;}
+.coda-kicker{
+  font-family:var(--font-sans);font-size:9.5px;letter-spacing:.34em;color:var(--faint);
+  margin:0 0 clamp(26px,4vh,44px);
+}
+.coda-poem{
+  display:inline-block;
+  writing-mode:vertical-rl;
+  text-orientation:upright;
+  font-size:clamp(24px,3.1vw,42px);
+  line-height:2.1;
+  letter-spacing:.2em;
+  margin:0 auto;
+  color:var(--paper);
+}
+.coda-poem p{margin:0;}
+.coda-poem .stanza + .stanza{margin-block-start:1.2em;}
+
+.coda-places{
+  display:flex;justify-content:center;gap:clamp(18px,5vw,72px);
+  margin:clamp(44px,7vh,80px) 0 0;
+  flex-wrap:wrap;
+}
+.coda-place{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:0 6px;
+}
+.coda-place b{
+  font-size:clamp(17px,1.7vw,23px);font-weight:400;letter-spacing:.3em;color:var(--paper-2);
+  transition:color .4s;
+}
+.coda-place span{
+  font-family:var(--font-latin);font-size:11px;letter-spacing:.14em;color:var(--faint);
+}
+.coda-place:hover b{color:var(--gold);}
+
+.coda-text{
+  max-width:560px;margin:clamp(44px,7vh,80px) auto 0;
+  font-size:clamp(13px,1.05vw,14.5px);
+  line-height:2.4;letter-spacing:.06em;
+  color:var(--dim);
+}
+.coda-actions{
+  display:flex;justify-content:center;gap:14px;flex-wrap:wrap;
+  margin-top:clamp(36px,5vh,56px);
+}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:14px 26px;
+  border:1px solid var(--line-2);
+  border-radius:1px;
+  font-family:var(--font-sans);
+  font-size:11px;letter-spacing:.24em;
+  color:var(--paper-2);
+  transition:border-color .4s, color .4s, background .4s, transform .4s;
+}
+.btn:hover{border-color:var(--gold);color:var(--paper);background:rgba(199,172,124,.06);transform:translateY(-2px);}
+.btn--solid{background:var(--seal);border-color:var(--seal);color:#f7f0e2;}
+.btn--solid:hover{background:#b84534;border-color:#b84534;color:#fff;}
+
+footer{
+  padding:clamp(28px,4vh,44px) var(--pad) clamp(34px,5vh,56px);
+  border-top:1px solid var(--line);
+}
+.foot-inner{
+  max-width:1120px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:24px;
+  flex-wrap:wrap;
+  font-family:var(--font-sans);
+  font-size:9.5px;letter-spacing:.2em;
+  color:var(--faint);
+  line-height:2.2;
+}
+.foot-inner p{margin:0;max-width:46ch;}
+.foot-mark{
+  font-family:var(--font-serif);
+  font-size:13px;letter-spacing:.4em;color:var(--dim);
+}
+
+/* ---------- 14. 诗签 ---------- */
+.draw{
+  position:fixed;inset:0;z-index:80;
+  display:grid;place-items:center;
+  padding:24px;
+  background:rgba(6,7,8,.78);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  opacity:0;visibility:hidden;
+  transition:opacity .5s var(--ease), visibility 0s .5s;
+}
+.draw.open{opacity:1;visibility:visible;transition:opacity .5s var(--ease), visibility 0s;}
+
+.draw-card{
+  position:relative;
+  width:min(500px,92vw);
+  max-height:90vh;
+  overflow:auto;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255,252,242,.7), transparent 55%),
+    linear-gradient(160deg,#ece4d0,#dcd3bc 60%,#d2c8ae);
+  color:#2b2620;
+  padding:clamp(34px,5vw,54px) clamp(28px,4vw,46px) clamp(26px,4vw,38px);
+  box-shadow:0 50px 120px rgba(0,0,0,.7);
+  transform:translateY(24px) scale(.97);
+  transition:transform .7s var(--ease);
+}
+.draw.open .draw-card{transform:none;}
+.draw-card::before{
+  content:"";position:absolute;inset:12px;
+  border:1px solid rgba(60,50,36,.18);
+  pointer-events:none;
+}
+.draw-label{
+  font-family:var(--font-sans);
+  font-size:9px;letter-spacing:.34em;color:rgba(60,50,36,.5);
+  margin:0 0 clamp(24px,4vh,36px);
+}
+.draw-line{
+  margin:0;
+  font-size:clamp(23px,3.4vw,32px);
+  line-height:1.85;
+  letter-spacing:.1em;
+  color:#241f1a;
+  min-height:3.7em;
+}
+.draw-line .stars{color:rgba(60,50,36,.25);}
+.draw-src{
+  margin:clamp(20px,3vh,30px) 0 0;
+  font-family:var(--font-sans);
+  font-size:10.5px;letter-spacing:.24em;
+  color:rgba(60,50,36,.6);
+  text-align:right;
+}
+.draw-seal{
+  width:40px;height:40px;font-size:11px;
+  margin:clamp(22px,4vh,34px) 4px 0 auto;
+  opacity:.9;
+}
+.draw-close{
+  position:absolute;top:14px;right:16px;
+  width:34px;height:34px;
+  display:grid;place-items:center;
+  font-family:var(--font-sans);font-size:18px;line-height:1;
+  color:rgba(60,50,36,.55);
+  transition:color .3s, transform .4s;
+}
+.draw-close:hover{color:#241f1a;transform:rotate(90deg);}
+.draw-actions{
+  display:flex;gap:10px;justify-content:space-between;align-items:center;
+  margin-top:clamp(24px,4vh,34px);
+  position:relative;z-index:2;
+}
+.draw-actions button{
+  font-family:var(--font-sans);
+  font-size:10px;letter-spacing:.22em;
+  color:rgba(60,50,36,.75);
+  border-bottom:1px solid rgba(60,50,36,.25);
+  padding-bottom:4px;
+  transition:color .3s,border-color .3s;
+}
+.draw-actions button:hover{color:#a83a2c;border-color:#a83a2c;}
+
+.toast{
+  position:fixed;left:50%;bottom:40px;
+  transform:translate(-50%,16px);
+  z-index:95;
+  padding:12px 22px;
+  background:rgba(20,22,23,.94);
+  border:1px solid var(--line-2);
+  font-family:var(--font-sans);font-size:10.5px;letter-spacing:.2em;
+  color:var(--paper-2);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s, transform .4s var(--ease);
+}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
+/* ---------- 15. 进入视口 ---------- */
+.js .reveal{
+  opacity:0;transform:translateY(26px);
+  transition:opacity 1.1s var(--ease), transform 1.1s var(--ease);
+  transition-delay:var(--d,0ms);
+}
+.js .reveal.in{opacity:1;transform:none;}
+
+/* ---------- 16. 文：赋 / 记 ---------- */
+.prose{
+  position:relative;
+  max-width:1120px;margin:0 auto;
+  padding:clamp(64px,11vh,120px) 0;
+  border-top:1px solid var(--line);
+}
+.prose-head{
+  display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+  gap:clamp(16px,3vw,40px);
+  margin-bottom:clamp(26px,4vh,44px);
+}
+.prose-id{max-width:640px;}
+.prose-chip{
+  display:inline-flex;align-items:center;gap:9px;
+  margin:0 0 16px;
+  font-family:var(--font-sans);font-size:9.5px;letter-spacing:.28em;color:#9db0b8;
+}
+.prose-chip b{
+  display:grid;place-items:center;
+  width:22px;height:22px;
+  background:#9db0b8;color:#0b0d0e;
+  font-family:var(--font-serif);font-size:12px;font-weight:400;letter-spacing:0;
+}
+.prose-chip span{letter-spacing:.34em;}
+.prose-id .poem-kicker{margin-bottom:12px;}
+.prose-id .poem-title{margin:0;}
+.prose-aside{
+  margin:0;max-width:17em;
+  font-size:clamp(12.5px,1.02vw,13.5px);
+  line-height:2.1;letter-spacing:.05em;color:var(--dim);
+}
+.prose-foot{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+  margin-top:clamp(22px,3.4vh,34px);
+}
+.prose-foot .poem-note{margin:0;border-top:0;padding-top:0;max-width:34em;}
+.prose-foot .seal{flex:0 0 auto;}
+
+/* 赋：纸本长卷 */
+.fu-panel{
+  position:relative;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255,252,242,.6), transparent 58%),
+    linear-gradient(158deg,#ece4d2,#e2d9c4 58%,#d9cfb6);
+  color:#2b2620;
+  padding:clamp(24px,3.2vw,44px) clamp(20px,3vw,42px);
+  box-shadow:0 34px 80px rgba(0,0,0,.5), inset 0 0 90px rgba(120,100,70,.12);
+}
+.fu-panel::before{
+  content:"";position:absolute;inset:12px;
+  border:1px solid rgba(60,50,36,.16);
+  pointer-events:none;
+}
+.fu-panel::after{
+  content:"";position:absolute;left:0;right:0;top:0;height:5px;
+  background:linear-gradient(to bottom, rgba(60,50,36,.10), transparent);
+  pointer-events:none;
+}
+.fu-text{
+  writing-mode:vertical-rl;
+  text-orientation:upright;
+  font-family:var(--font-kai);
+  font-size:clamp(14px,1.26vw,17px);
+  line-height:2.05;
+  letter-spacing:.03em;
+  height:clamp(430px,56vh,540px);
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:thin;
+  padding-right:2px;
+  -webkit-overflow-scrolling:touch;
+}
+.fu-text p{margin:0;}
+.fu-text p + p{margin-block-start:1.15em;}
+.fu-cap{
+  margin:clamp(14px,2vh,20px) 0 0;
+  font-family:var(--font-sans);
+  font-size:9px;letter-spacing:.22em;color:rgba(60,50,36,.5);
+}
+
+/* 记：夜色庭院 */
+.ji-stage{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(ellipse 70% 55% at 76% 22%, rgba(206,214,208,.10), transparent 68%),
+    linear-gradient(to bottom, #101416, #0b0e10);
+  padding:clamp(26px,4vw,52px);
+  display:flex;justify-content:flex-end;
+}
+.ji-yard{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.ji-moon{
+  position:absolute;right:12%;top:8%;
+  width:clamp(120px,16vw,200px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle, rgba(240,235,220,.20), rgba(240,235,220,.05) 62%, transparent 72%);
+  filter:blur(2px);
+}
+.ji-shadow{
+  position:absolute;left:-8%;bottom:-12%;
+  width:58%;height:120%;
+  background:
+    linear-gradient(96deg, transparent 46%, rgba(0,0,0,.55) 46.5%, rgba(0,0,0,.55) 48%, transparent 48.5%),
+    linear-gradient(101deg, transparent 61%, rgba(0,0,0,.42) 61.5%, rgba(0,0,0,.42) 63%, transparent 63.5%),
+    linear-gradient(92deg, transparent 74%, rgba(0,0,0,.36) 74.5%, rgba(0,0,0,.36) 76%, transparent 76.5%);
+  filter:blur(5px);
+  transform:rotate(-4deg);
+}
+.ji-shadow.s2{left:auto;right:-6%;bottom:-18%;transform:rotate(7deg) scaleX(-1);opacity:.6;}
+.ji-card{
+  position:relative;z-index:2;
+  max-width:min(560px,100%);
+  padding-left:clamp(18px,3vw,38px);
+}
+.ji-card .prose-chip{color:#a8b6b8;}
+.ji-card .prose-chip b{background:#a8b6b8;}
+.ji-text{
+  writing-mode:vertical-rl;
+  text-orientation:upright;
+  font-family:var(--font-kai);
+  font-size:clamp(16px,1.5vw,20px);
+  line-height:2.15;
+  letter-spacing:.1em;
+  height:clamp(300px,42vh,400px);
+  color:var(--paper);
+  margin-top:clamp(18px,2.6vh,26px);
+}
+.ji-text p{margin:0;}
+.ji-text p + p{margin-block-start:1.1em;}
+.ji-card .seal{
+  margin-top:clamp(18px,2.6vh,26px);
+  width:34px;height:34px;font-size:10px;
+}
+.ji-note{max-width:34em;}
+
+/* 章节 / 作品的长图按钮 */
+.ch-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:clamp(14px,2.2vh,20px);}
+.mini-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 13px;min-height:36px;
+  border:1px solid rgba(234,228,215,.24);
+  font-family:var(--font-sans);font-size:10px;letter-spacing:.22em;
+  color:rgba(234,228,215,.55);
+  transition:color .35s,border-color .35s,background .35s;
+}
+.mini-btn:hover{color:var(--paper-2);border-color:var(--line-2);background:rgba(234,228,215,.04);}
+.mini-btn i{
+  display:block;width:9px;height:11px;
+  border:1px solid currentColor;border-radius:1px;
+  position:relative;
+}
+.mini-btn i::after{
+  content:"";position:absolute;left:1px;right:1px;top:2px;height:1px;
+  background:currentColor;opacity:.6;
+}
+.work-actions{margin-top:clamp(18px,2.8vh,26px);}
+
+/* ---------- 17. 长图弹层 ---------- */
+.share{
+  position:fixed;inset:0;z-index:88;
+  display:grid;place-items:center;
+  padding:clamp(12px,2vw,28px);
+  background:rgba(6,7,8,.92);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  opacity:0;visibility:hidden;
+  transition:opacity .45s var(--ease), visibility 0s .45s;
+}
+.share.open{opacity:1;visibility:visible;transition:opacity .45s var(--ease), visibility 0s;}
+.share-panel{
+  width:min(480px,100%);
+  max-height:94vh;
+  display:flex;flex-direction:column;gap:12px;
+  transform:translateY(16px);
+  transition:transform .6s var(--ease);
+}
+.share.open .share-panel{transform:none;}
+.share-top{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-family:var(--font-sans);font-size:9.5px;letter-spacing:.28em;color:var(--dim);
+}
+.share-top b{font-weight:400;color:var(--paper-2);letter-spacing:.22em;}
+.share-close{
+  width:30px;height:30px;display:grid;place-items:center;
+  font-size:17px;line-height:1;color:var(--dim);
+  transition:color .3s,transform .4s;
+}
+.share-close:hover{color:var(--paper);transform:rotate(90deg);}
+.share-stage{
+  flex:1 1 auto;min-height:0;
+  overflow:auto;
+  display:grid;place-items:start center;
+  padding:10px;
+  background:rgba(12,13,14,.7);
+  border:1px solid var(--line);
+  -webkit-overflow-scrolling:touch;
+}
+.share-stage img{
+  display:block;width:100%;height:auto;
+  box-shadow:0 18px 60px rgba(0,0,0,.65);
+}
+.share-status{
+  margin:0;padding:14px 10px;
+  font-family:var(--font-sans);font-size:10px;letter-spacing:.24em;color:var(--faint);
+}
+.share-actions{display:flex;gap:8px;}
+.share-actions .btn{
+  flex:1;justify-content:center;
+  padding:13px 8px;font-size:10px;letter-spacing:.18em;
+}
+.share-tip{
+  margin:0;
+  font-family:var(--font-sans);font-size:9.5px;line-height:1.9;letter-spacing:.12em;
+  color:var(--faint);text-align:center;
+}
+
+/* ---------- 18. 问心 ---------- */
+.ask{
+  position:relative;
+  padding:clamp(90px,15vh,160px) var(--pad);
+  border-top:1px solid var(--line);
+  text-align:center;
+  overflow:hidden;
+}
+.ask::before{
+  content:"";position:absolute;left:50%;top:50%;
+  width:min(64vw,620px);aspect-ratio:1;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  border:1px solid rgba(234,228,215,.06);
+  pointer-events:none;
+}
+.ask-inner{position:relative;max-width:720px;margin:0 auto;}
+.ask-title{
+  margin:clamp(18px,3vh,28px) 0 0;
+  font-size:clamp(30px,4.6vw,54px);
+  font-weight:500;letter-spacing:.18em;line-height:1.3;
+}
+.ask-lead{
+  margin:clamp(18px,3vh,26px) auto 0;
+  max-width:30em;
+  font-size:clamp(13px,1.05vw,14.5px);
+  line-height:2.3;letter-spacing:.05em;color:var(--dim);
+}
+.ask-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:clamp(30px,4.6vh,44px);}
+.ask-meta{
+  margin:clamp(22px,3.4vh,32px) 0 0;
+  font-family:var(--font-sans);font-size:9px;letter-spacing:.26em;color:var(--faint);
+}
+
+.quiz{
+  position:fixed;inset:0;z-index:84;
+  display:grid;place-items:center;
+  padding:clamp(14px,3vw,32px);
+  background:rgba(6,7,8,.86);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  opacity:0;visibility:hidden;
+  transition:opacity .5s var(--ease), visibility 0s .5s;
+}
+.quiz.open{opacity:1;visibility:visible;transition:opacity .5s var(--ease), visibility 0s;}
+.quiz-card{
+  position:relative;
+  width:min(580px,100%);
+  max-height:92vh;
+  overflow:auto;
+  background:
+    radial-gradient(circle at 16% 10%, rgba(255,252,242,.7), transparent 55%),
+    linear-gradient(160deg,#ece4d0,#dcd3bc 60%,#d2c8ae);
+  color:#2b2620;
+  padding:clamp(30px,5vw,46px) clamp(24px,4.4vw,42px) clamp(26px,4vw,36px);
+  box-shadow:0 50px 120px rgba(0,0,0,.7);
+  transform:translateY(20px);
+  transition:transform .6s var(--ease);
+}
+.quiz.open .quiz-card{transform:none;}
+.quiz-card::before{
+  content:"";position:absolute;inset:11px;
+  border:1px solid rgba(60,50,36,.16);
+  pointer-events:none;
+}
+.quiz-close{
+  position:absolute;top:12px;right:14px;
+  width:32px;height:32px;display:grid;place-items:center;
+  font-family:var(--font-sans);font-size:17px;line-height:1;
+  color:rgba(60,50,36,.55);
+  z-index:3;
+  transition:color .3s,transform .4s;
+}
+.quiz-close:hover{color:#241f1a;transform:rotate(90deg);}
+.quiz-inner{position:relative;z-index:2;transition:opacity .28s ease, transform .28s ease;}
+.quiz-inner.swap{opacity:0;transform:translateY(8px);}
+.quiz-bar{
+  display:flex;align-items:center;gap:7px;
+  margin:0 0 clamp(22px,3.6vh,32px);
+  font-family:var(--font-sans);font-size:8.5px;letter-spacing:.24em;
+  color:rgba(60,50,36,.55);
+}
+.quiz-bar i{display:block;width:20px;height:1px;background:rgba(60,50,36,.2);}
+.quiz-bar i.on{background:#a83a2c;}
+.quiz-bar span{margin-left:auto;}
+.quiz-kicker{
+  margin:0 0 14px;
+  font-family:var(--font-sans);font-size:9px;letter-spacing:.3em;
+  color:rgba(60,50,36,.55);
+}
+.quiz-q{
+  margin:0 0 10px;
+  font-size:clamp(23px,3.2vw,30px);
+  line-height:1.45;letter-spacing:.08em;
+  color:#241f1a;
+}
+.quiz-sub{
+  margin:0 0 clamp(18px,2.8vh,28px);
+  font-size:clamp(12px,1vw,13px);line-height:2;letter-spacing:.04em;
+  color:rgba(60,50,36,.66);
+}
+.quiz-opts{display:flex;flex-direction:column;}
+.quiz-opt{
+  display:block;width:100%;text-align:left;
+  padding:clamp(14px,2.2vh,20px) 2px;
+  border-bottom:1px solid rgba(60,50,36,.16);
+  font-size:clamp(16px,1.9vw,19px);
+  line-height:1.8;letter-spacing:.05em;color:#2b2620;
+  transition:color .3s,padding-left .4s var(--ease);
+}
+.quiz-opt:first-child{border-top:1px solid rgba(60,50,36,.16);}
+.quiz-opt:hover{color:#a83a2c;padding-left:10px;}
+.quiz-opt em{
+  display:block;margin-top:5px;
+  font-style:normal;
+  font-family:var(--font-sans);font-size:9px;letter-spacing:.18em;
+  color:rgba(60,50,36,.5);
+}
+.quiz-intro p{font-size:clamp(13px,1.1vw,14px);line-height:2.2;color:rgba(60,50,36,.72);margin:0 0 1.2em;}
+.quiz-start{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.quiz-start .btn{border-color:rgba(60,50,36,.3);color:#2b2620;}
+.quiz-start .btn:hover{background:rgba(60,50,36,.06);border-color:#2b2620;}
+.quiz-start .btn--solid{background:#a83a2c;border-color:#a83a2c;color:#f7f0e2;}
+.quiz-result-name{
+  margin:0 0 6px;
+  font-size:clamp(34px,5.4vw,52px);
+  letter-spacing:.22em;line-height:1.15;color:#241f1a;
+}
+.quiz-result-tag{
+  margin:0 0 clamp(18px,3vh,26px);
+  font-family:var(--font-sans);font-size:9px;letter-spacing:.3em;color:#a83a2c;
+}
+.quiz-picks{
+  margin:0 0 clamp(18px,3vh,26px);
+  padding:0;list-style:none;
+  border-top:1px solid rgba(60,50,36,.16);
+}
+.quiz-picks li{
+  padding:11px 0;
+  border-bottom:1px solid rgba(60,50,36,.12);
+  font-size:clamp(13px,1.5vw,15px);line-height:1.8;letter-spacing:.04em;
+  display:flex;gap:10px;
+}
+.quiz-picks b{font-weight:400;color:rgba(60,50,36,.5);font-family:var(--font-sans);font-size:9px;letter-spacing:.16em;padding-top:5px;}
+.quiz-picks span{flex:1;}
+.quiz-picks em{
+  display:block;margin-top:4px;font-style:normal;
+  font-family:var(--font-sans);font-size:9px;letter-spacing:.16em;
+  color:rgba(60,50,36,.45);
+}
+.quiz-read{
+  margin:0 0 clamp(20px,3vh,28px);
+  font-size:clamp(12.5px,1.05vw,13.5px);line-height:2.15;letter-spacing:.04em;
+  color:rgba(60,50,36,.76);
+  padding-left:14px;border-left:1px solid rgba(168,58,44,.4);
+}
+.quiz-actions{display:flex;flex-wrap:wrap;gap:10px;}
+.quiz-actions .btn{border-color:rgba(60,50,36,.28);color:#2b2620;font-size:10px;padding:12px 18px;}
+.quiz-actions .btn:hover{background:rgba(60,50,36,.06);border-color:#2b2620;}
+.quiz-actions .btn--solid{background:#a83a2c;border-color:#a83a2c;color:#f7f0e2;}
+
+/* ---------- 19. 响应式 ---------- */
+@media (max-width:1024px){
+  .rail{display:none;}
+}
+
+@media (max-width:860px){
+  .prologue-inner{grid-template-columns:1fr;gap:clamp(28px,5vh,44px);}
+  .chapter-head{
+    grid-template-columns:1fr;
+    grid-template-areas:"num" "title" "desc";
+    row-gap:14px;
+  }
+  .ch-num{font-size:52px;margin-bottom:6px;}
+  .ch-coord{position:static;text-align:left;margin-top:6px;}
+  .poem-inner{grid-template-columns:1fr;row-gap:28px;column-gap:0;}
+  .poem.flip .poem-inner{grid-template-columns:1fr;}
+  .poem-aside{order:-1;min-width:0;width:100%;max-width:560px;}
+  .verse-wrap{width:100%;padding-right:0;}
+  .verse-wrap::after{display:none;}
+  .verse{
+    display:block;
+    gap:0;
+    max-height:none;
+    font-size:var(--fs-m,19px);
+    line-height:2.25;
+    letter-spacing:.08em;
+  }
+  .verse .stanza{display:block;}
+  .verse .stanza + .stanza{margin-block-start:1.1em;}
+  .verse p{
+    writing-mode:horizontal-tb;
+    width:auto;
+    white-space:normal;
+  }
+  .poem-note{max-width:none;}
+  .relic{grid-template-columns:1fr;}
+  .relic-verse{
+    writing-mode:vertical-rl;
+    font-size:16px;
+  }
+  .hero-verse{display:none;}
+  .hero-seal{width:40px;height:40px;font-size:11px;margin-bottom:.5em;}
+  .hero-foot .coord{display:none;}
+  .scroll-cue{position:static;transform:none;margin:0 auto;}
+  .hero-foot{align-items:center;}
+  .interlude-text{right:22px;font-size:42px;letter-spacing:.2em;}
+  .interlude-cap{left:22px;max-width:16ch;font-size:11px;}
+  .coda-poem{font-size:clamp(22px,5vw,30px);max-height:none;}
+
+  .prose-head{flex-direction:column;align-items:flex-start;}
+  .prose-aside{max-width:none;}
+  .fu-text{
+    writing-mode:horizontal-tb;
+    height:auto;
+    overflow:visible;
+    font-size:15px;
+    line-height:2.1;
+    letter-spacing:.04em;
+  }
+  .fu-text p + p{margin-block-start:0;margin-top:1.1em;}
+  .fu-panel{padding:22px 20px;}
+  .fu-panel::before{inset:8px;}
+  .ji-stage{padding:22px 18px;justify-content:flex-start;}
+  .ji-card{padding-left:0;}
+  .ji-text{height:clamp(280px,46vh,360px);font-size:16px;}
+  .ji-moon{width:120px;right:6%;}
+  .prose-foot{flex-direction:column;align-items:flex-start;}
+  .share-panel{width:100%;}
+  .quiz-card{max-height:94vh;}
+}
+
+@media (max-width:600px){
+  .topbar{padding-top:14px;}
+  .brand-en{display:none;}
+  .menu-item a{
+    grid-template-columns:32px 1fr;
+    grid-template-areas:"no cn" "no meta";
+    row-gap:2px;
+  }
+  .menu-item .m-no{grid-area:no;align-self:start;padding-top:8px;}
+  .menu-item .m-cn{grid-area:cn;font-size:26px;}
+  .menu-item .m-meta{grid-area:meta;text-align:left;font-size:9px;}
+  .hero-foot{font-size:8.5px;letter-spacing:.18em;}
+  .hero-sub{letter-spacing:.3em;font-size:14px;}
+  .timeline-wrap{margin-top:44px;}
+  .tl{width:104px;}
+  .relic-card{padding:22px 18px;}
+  .draw-actions{flex-direction:column;align-items:flex-start;gap:14px;}
+  .coda-actions .btn{width:100%;justify-content:center;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+  .js .reveal{opacity:1;transform:none;}
+  .js .verse p{opacity:1;transform:none;}
+  .poem .seal{opacity:.92;transform:rotate(-5deg);}
+}
+</style>
+</head>
+<body>
+
+<div class="ambient" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- 顶栏 -->
+<header class="topbar" id="topbar">
+  <a class="brand" href="#top" aria-label="东坡 · 苏轼诗词展">
+    <span class="seal" aria-hidden="true">東坡</span>
+    <span class="brand-txt">
+      <span class="brand-cn">苏轼诗词展</span>
+      <span class="brand-en">DONGPO · 1037—1101</span>
+    </span>
+  </a>
+  <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menu">
+    <span>目次</span>
+    <span class="bars" aria-hidden="true"><i></i><i></i></span>
+  </button>
+</header>
+
+<!-- 目次 -->
+<div class="menu" id="menu" aria-hidden="true">
+  <div class="menu-inner">
+    <div class="menu-head">
+      <p class="cn">目次</p>
+      <p class="en">CONTENTS</p>
+    </div>
+    <ul class="menu-list">
+      <li class="menu-item"><a href="#prologue" data-nav><span class="m-no">00</span><span class="m-cn">雪泥</span><span class="m-meta">1037—1071 · 眉山 / 凤翔</span></a></li>
+      <li class="menu-item"><a href="#ch1" data-nav><span class="m-no">01</span><span class="m-cn">湖山</span><span class="m-meta">1071—1079 · 杭州 / 密州</span></a></li>
+      <li class="menu-item"><a href="#ch2" data-nav><span class="m-no">02</span><span class="m-cn">赤壁</span><span class="m-meta">1080—1084 · 黄州</span></a></li>
+      <li class="menu-item"><a href="#ch3" data-nav><span class="m-no">03</span><span class="m-cn">庐山</span><span class="m-meta">1084—1093 · 庐山 / 杭州</span></a></li>
+      <li class="menu-item"><a href="#ch4" data-nav><span class="m-no">04</span><span class="m-cn">岭南</span><span class="m-meta">1094—1100 · 惠州 / 儋州</span></a></li>
+      <li class="menu-item"><a href="#coda" data-nav><span class="m-no">05</span><span class="m-cn">归</span><span class="m-meta">1101 · 常州</span></a></li>
+    </ul>
+    <div class="menu-foot">
+      <span>十五首诗词 · 两篇文</span>
+      <span>诗作录自通行本</span>
+    </div>
+  </div>
+</div>
+
+<!-- 进度轨 -->
+<nav class="rail" aria-label="章节进度">
+  <span class="rail-line" aria-hidden="true"></span>
+  <span class="rail-fill" aria-hidden="true"></span>
+  <a href="#prologue" data-rail="prologue" aria-label="雪泥"><span class="lbl">雪泥</span></a>
+  <a href="#ch1" data-rail="ch1" aria-label="湖山"><span class="lbl">湖山</span></a>
+  <a href="#ch2" data-rail="ch2" aria-label="赤壁"><span class="lbl">赤壁</span></a>
+  <a href="#ch3" data-rail="ch3" aria-label="庐山"><span class="lbl">庐山</span></a>
+  <a href="#ch4" data-rail="ch4" aria-label="岭南"><span class="lbl">岭南</span></a>
+  <a href="#coda" data-rail="coda" aria-label="归"><span class="lbl">归</span></a>
+</nav>
+
+<main>
+  <!-- 首屏 -->
+  <section class="hero" id="top">
+    <canvas id="mist" aria-hidden="true"></canvas>
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="moon" aria-hidden="true"></div>
+
+    <div class="hero-main">
+      <p class="kicker">苏轼诗词展 · SU SHI · 1037—1101</p>
+      <div class="hero-line">
+        <h1 class="hero-title"><span>东</span><span>坡</span></h1>
+        <span class="seal hero-seal" aria-hidden="true">東坡</span>
+      </div>
+      <p class="hero-sub">一蓑烟雨任平生</p>
+    </div>
+
+    <div class="hero-verse" aria-hidden="true">
+      <p>人生如逆旅，我亦是行人。</p>
+      <span>临江仙 · 送钱穆父</span>
+    </div>
+
+    <div class="hero-foot">
+      <p>十五首诗词 · 两篇文<br>从眉山到儋州</p>
+      <a class="scroll-cue" href="#prologue"><span>展卷</span><i aria-hidden="true"></i></a>
+      <p class="coord">30.05°N 103.83°E<br>眉山</p>
+    </div>
+  </section>
+
+  <!-- 序章 -->
+  <section class="prologue" id="prologue" data-chapter="prologue" data-ambient="#1a2024">
+    <div class="prologue-inner">
+      <div class="reveal">
+        <p class="kicker" style="margin-bottom:clamp(18px,3vh,30px)">序 · 雪泥鸿爪</p>
+        <blockquote class="prologue-quote">
+          人生到处知何似，<br>应似飞鸿踏雪泥。
+          <cite>苏轼《和子由渑池怀旧》 · 1061</cite>
+        </blockquote>
+      </div>
+      <div class="reveal" style="--d:120ms">
+        <p class="prologue-text">苏轼，字子瞻，号东坡居士，眉州眉山人。<strong>景祐三年十二月十九日（1037年1月8日）</strong>生于一个书香之家。二十一岁与弟弟苏辙同榜进士及第，主考官是欧阳修。</p>
+        <p class="prologue-text">此后的四十年，他几乎一直在路上：杭州、密州、徐州、湖州、黄州、惠州、儋州。最高做到翰林学士，最低是贬所的罪臣。他把每一次起落，都写成了诗。</p>
+        <div class="prologue-meta">
+          <div><b>15</b>首诗词</div>
+          <div><b>02</b>篇文</div>
+          <div><b>06</b>幕</div>
+          <div><b>66</b>岁</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-wrap reveal" style="--d:200ms">
+      <div class="timeline" role="list">
+        <a class="tl" href="#prologue" role="listitem"><span class="tl-year">1037</span><span class="tl-label">生于眉山</span></a>
+        <a class="tl" href="#prologue" role="listitem"><span class="tl-year">1057</span><span class="tl-label">进士及第</span></a>
+        <a class="tl" href="#prologue" role="listitem"><span class="tl-year">1061</span><span class="tl-label">凤翔签判</span></a>
+        <a class="tl" href="#ch1" role="listitem"><span class="tl-year">1071</span><span class="tl-label">通判杭州</span></a>
+        <a class="tl" href="#ch1" role="listitem"><span class="tl-year">1074</span><span class="tl-label">知密州</span></a>
+        <a class="tl" href="#ch2" role="listitem"><span class="tl-year">1079</span><span class="tl-label">乌台诗案</span></a>
+        <a class="tl" href="#ch2" role="listitem"><span class="tl-year">1080</span><span class="tl-label">贬黄州</span></a>
+        <a class="tl" href="#ch2" role="listitem"><span class="tl-year">1082</span><span class="tl-label">赤壁</span></a>
+        <a class="tl" href="#ch3" role="listitem"><span class="tl-year">1084</span><span class="tl-label">离黄州</span></a>
+        <a class="tl" href="#ch3" role="listitem"><span class="tl-year">1089</span><span class="tl-label">再知杭州</span></a>
+        <a class="tl" href="#ch4" role="listitem"><span class="tl-year">1094</span><span class="tl-label">贬惠州</span></a>
+        <a class="tl" href="#ch4" role="listitem"><span class="tl-year">1097</span><span class="tl-label">贬儋州</span></a>
+        <a class="tl" href="#ch4" role="listitem"><span class="tl-year">1100</span><span class="tl-label">北归</span></a>
+        <a class="tl" href="#coda" role="listitem"><span class="tl-year">1101</span><span class="tl-label">卒于常州</span></a>
+      </div>
+    </div>
+
+    <!-- 第一首 -->
+    <article class="poem reveal">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(20px,2vw,27px)">
+            <div class="stanza">
+              <p>人生到处知何似，应似飞鸿踏雪泥。</p>
+              <p>泥上偶然留指爪，鸿飞那复计东西。</p>
+              <p>老僧已死成新塔，坏壁无由见旧题。</p>
+              <p>往日崎岖还记否，路长人困蹇驴嘶。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>七律</span><i></i><span>嘉祐六年</span><i></i><span>1061</span></p>
+          <h3 class="poem-title">和子由渑池怀旧</h3>
+          <p class="poem-note">赴凤翔府签判任途中，弟弟苏辙送至郑州，先作《怀渑池寄子瞻兄》，苏轼以此诗和答。渑池是他们早年赴京应试时借宿过的地方——老僧已逝，壁上的旧题也寻不见了。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- 第一章 -->
+  <section class="chapter" id="ch1" data-chapter="ch1" data-ambient="#16211c">
+    <header class="chapter-head">
+      <div class="ch-num reveal">01</div>
+      <div style="grid-area:title">
+        <h2 class="ch-title reveal"><small>1071 — 1079 · 杭州 / 密州</small>湖山</h2>
+        <p class="ch-quote reveal" style="--d:60ms">欲把西湖比西子，淡妆浓抹总相宜。</p>
+      </div>
+      <p class="ch-desc reveal" style="--d:120ms">熙宁四年，因与王安石新法不合，苏轼自请外任，通判杭州。三年后知密州。这是他中年最明亮的一段：西湖的雨、超然台的春、中秋的月亮。也是在这时，他在梦里第一次见到了亡妻。</p>
+      <p class="ch-coord reveal">30.25°N 120.15°E<br>HANGZHOU</p>
+    </header>
+
+    <article class="poem reveal">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(22px,2.3vw,30px)">
+            <div class="stanza">
+              <p>黑云翻墨未遮山，白雨跳珠乱入船。</p>
+              <p>卷地风来忽吹散，望湖楼下水如天。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>七绝</span><i></i><span>熙宁五年</span><i></i><span>1072</span></p>
+          <h3 class="poem-title">六月二十七日<br>望湖楼醉书<span>其一</span></h3>
+          <p class="poem-note">六月二十七日，苏轼在西湖边望湖楼饮酒，见骤雨忽至又忽止，写下五首，此为第一首。黑云、白雨、卷地风，四句写尽一场夏日暴雨。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="poem reveal flip">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(22px,2.3vw,30px)">
+            <div class="stanza">
+              <p>水光潋滟晴方好，山色空蒙雨亦奇。</p>
+              <p>欲把西湖比西子，淡妆浓抹总相宜。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>七绝</span><i></i><span>熙宁六年</span><i></i><span>1073</span></p>
+          <h3 class="poem-title">饮湖上初晴后雨<span>其二</span></h3>
+          <p class="poem-note">原作两首，此为第二首。先晴后雨，一日之内见西湖两副面孔。此后「西子湖」几乎成了西湖的别名。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="poem reveal">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(18px,1.8vw,23px)">
+            <div class="stanza">
+              <p>十年生死两茫茫，不思量，自难忘。</p>
+              <p>千里孤坟，无处话凄凉。</p>
+              <p>纵使相逢应不识，尘满面，鬓如霜。</p>
+            </div>
+            <div class="stanza">
+              <p>夜来幽梦忽还乡，小轩窗，正梳妆。</p>
+              <p>相顾无言，惟有泪千行。</p>
+              <p>料得年年肠断处，明月夜，短松冈。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>词 · 江城子</span><i></i><span>熙宁八年</span><i></i><span>1075</span></p>
+          <h3 class="poem-title">乙卯正月二十日<br>夜记梦</h3>
+          <p class="poem-note">正月二十日夜，苏轼梦见亡妻王弗。王弗十六岁嫁他，二十七岁病逝，葬于眉山。「十年」是实指：距她去世，正好十年。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="poem reveal flip">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(18px,1.78vw,23px)">
+            <div class="stanza">
+              <p>明月几时有？把酒问青天。</p>
+              <p>不知天上宫阙，今夕是何年。</p>
+              <p>我欲乘风归去，又恐琼楼玉宇，高处不胜寒。</p>
+              <p>起舞弄清影，何似在人间。</p>
+            </div>
+            <div class="stanza">
+              <p>转朱阁，低绮户，照无眠。</p>
+              <p>不应有恨，何事长向别时圆？</p>
+              <p>人有悲欢离合，月有阴晴圆缺，此事古难全。</p>
+              <p>但愿人长久，千里共婵娟。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>词 · 水调歌头</span><i></i><span>熙宁九年</span><i></i><span>1076</span></p>
+          <h3 class="poem-title">明月几时有</h3>
+          <p class="poem-note">中秋夜，欢饮达旦，大醉，作此篇，兼怀子由。胡仔《苕溪渔隐丛话》评：「中秋词，自东坡《水调歌头》一出，余词尽废。」</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- 第二章 -->
+  <section class="chapter" id="ch2" data-chapter="ch2" data-ambient="#141b24">
+    <header class="chapter-head">
+      <div class="ch-num reveal">02</div>
+      <div style="grid-area:title">
+        <h2 class="ch-title reveal"><small>1080 — 1084 · 黄州</small>赤壁</h2>
+        <p class="ch-quote reveal" style="--d:60ms">一蓑烟雨任平生。</p>
+      </div>
+      <p class="ch-desc reveal" style="--d:120ms">元丰二年，因「乌台诗案」下狱百余日，贬为黄州团练副使，不得签书公事。他在城东一块荒坡上开垦耕种，自号「东坡」。黄州的四年，他写出了最好的词，也写出了《赤壁赋》。</p>
+      <p class="ch-coord reveal">30.45°N 114.88°E<br>HUANGZHOU</p>
+    </header>
+
+    <article class="poem reveal">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(19px,1.95vw,25px)">
+            <div class="stanza">
+              <p>缺月挂疏桐，漏断人初静。</p>
+              <p>谁见幽人独往来，缥缈孤鸿影。</p>
+            </div>
+            <div class="stanza">
+              <p>惊起却回头，有恨无人省。</p>
+              <p>拣尽寒枝不肯栖，寂寞沙洲冷。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>词 · 卜算子</span><i></i><span>元丰三年</span><i></i><span>1080</span></p>
+          <h3 class="poem-title">黄州定慧院寓居作</h3>
+          <p class="poem-note">初到黄州，寓居定惠院（一作定慧院）。词中的「孤鸿」，常被读作他自己的影子：拣尽寒枝，不肯将就。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="poem reveal flip">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(18px,1.8vw,23px)">
+            <div class="stanza">
+              <p>莫听穿林打叶声，何妨吟啸且徐行。</p>
+              <p>竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。</p>
+            </div>
+            <div class="stanza">
+              <p>料峭春风吹酒醒，微冷，山头斜照却相迎。</p>
+              <p>回首向来萧瑟处，归去，也无风雨也无晴。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>词 · 定风波</span><i></i><span>元丰五年</span><i></i><span>1082</span></p>
+          <h3 class="poem-title">莫听穿林打叶声</h3>
+          <p class="poem-note">三月七日，往沙湖看田，途中遇雨，雨具先被带走，同行的人狼狈不堪，他却不觉。雨过天晴，写下此词。「一蓑烟雨任平生」，后来成了他最著名的自画像。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 寒食帖 -->
+    <section class="relic reveal">
+      <div class="relic-info">
+        <p class="poem-kicker"><span>墨迹</span><i></i><span>元丰五年</span><i></i><span>1082</span></p>
+        <h3 class="poem-title">黄州寒食诗帖</h3>
+        <p class="poem-note">寒食节，黄州苦雨，小屋如渔舟（此句见第二首）。苏轼把这两首诗写在纸上，笔墨由沉郁渐至激越。这件诗稿后来被称为《黄州寒食诗帖》，后世推为「天下第三行书」。<br><br>此处录第一首全篇。</p>
+        <span class="seal" aria-hidden="true">東坡</span>
+      </div>
+      <div>
+        <div class="relic-card">
+          <div class="relic-verse">
+            <p>自我来黄州，已过三寒食。</p>
+            <p>年年欲惜春，春去不容惜。</p>
+            <p>今年又苦雨，两月秋萧瑟。</p>
+            <p>卧闻海棠花，泥污燕支雪。</p>
+            <p>暗中偷负去，夜半真有力。</p>
+            <p>何殊病少年，病起头已白。</p>
+            <p class="sig">东坡居士</p>
+          </div>
+          <span class="seal relic-seal" aria-hidden="true">東坡</span>
+        </div>
+        <p class="relic-cap">《黄州寒食诗帖》局部 · 纸本 · 台北故宫博物院藏</p>
+      </div>
+    </section>
+
+    <!-- 江水间奏 -->
+    <aside class="interlude" aria-hidden="true">
+      <div class="moonpath"></div>
+      <div class="water"></div>
+      <p class="interlude-cap"><b>元丰五年 · 七月既望</b>与客泛舟，游于赤壁之下。江流有声，断岸千尺。</p>
+      <p class="interlude-text">大江东去</p>
+    </aside>
+
+    <article class="poem reveal">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(17px,1.7vw,22px)">
+            <div class="stanza">
+              <p>大江东去，浪淘尽，千古风流人物。</p>
+              <p>故垒西边，人道是，三国周郎赤壁。</p>
+              <p>乱石穿空，惊涛拍岸，卷起千堆雪。</p>
+              <p>江山如画，一时多少豪杰。</p>
+            </div>
+            <div class="stanza">
+              <p>遥想公瑾当年，小乔初嫁了，雄姿英发。</p>
+              <p>羽扇纶巾，谈笑间，樯橹灰飞烟灭。</p>
+              <p>故国神游，多情应笑我，早生华发。</p>
+              <p>人生如梦，一尊还酹江月。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>词 · 念奴娇</span><i></i><span>元丰五年</span><i></i><span>1082</span></p>
+          <h3 class="poem-title">赤壁怀古</h3>
+          <p class="poem-note">七月，苏轼与友人泛舟黄州赤鼻矶下。此处并非三国赤壁古战场，他未必不知，却仍借「周郎」写下这首词。同年，他两度夜游赤壁，写成前后《赤壁赋》。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 文 · 前赤壁赋 -->
+    <article class="prose fu reveal">
+      <div class="prose-head">
+        <div class="prose-id">
+          <p class="prose-chip"><b>文</b><span>赋</span></p>
+          <p class="poem-kicker"><span>元丰五年 七月既望</span><i></i><span>1082</span><i></i><span>黄州</span></p>
+          <h3 class="poem-title">前赤壁赋</h3>
+        </div>
+        <p class="prose-aside">同一个月夜，词写「大江东去」，赋写水与月。两篇各自成立，此处收的是前一篇。</p>
+      </div>
+      <div class="fu-panel">
+        <div class="fu-text">
+          <p>壬戌之秋，七月既望，苏子与客泛舟游于赤壁之下。清风徐来，水波不兴。举酒属客，诵明月之诗，歌窈窕之章。少焉，月出于东山之上，徘徊于斗牛之间。白露横江，水光接天。纵一苇之所如，凌万顷之茫然。浩浩乎如冯虚御风，而不知其所止；飘飘乎如遗世独立，羽化而登仙。</p>
+          <p>于是饮酒乐甚，扣舷而歌之。歌曰：「桂棹兮兰桨，击空明兮溯流光。渺渺兮予怀，望美人兮天一方。」客有吹洞箫者，倚歌而和之。其声呜呜然，如怨如慕，如泣如诉，余音袅袅，不绝如缕。舞幽壑之潜蛟，泣孤舟之嫠妇。</p>
+          <p>苏子愀然，正襟危坐，而问客曰：「何为其然也？」客曰：「『月明星稀，乌鹊南飞』，此非曹孟德之诗乎？西望夏口，东望武昌，山川相缪，郁乎苍苍，此非孟德之困于周郎者乎？方其破荆州，下江陵，顺流而东也，舳舻千里，旌旗蔽空，酾酒临江，横槊赋诗，固一世之雄也，而今安在哉？况吾与子渔樵于江渚之上，侣鱼虾而友麋鹿，驾一叶之扁舟，举匏樽以相属。寄蜉蝣于天地，渺沧海之一粟。哀吾生之须臾，羡长江之无穷。挟飞仙以遨游，抱明月而长终。知不可乎骤得，托遗响于悲风。」</p>
+          <p>苏子曰：「客亦知夫水与月乎？逝者如斯，而未尝往也；盈虚者如彼，而卒莫消长也。盖将自其变者而观之，则天地曾不能以一瞬；自其不变者而观之，则物与我皆无尽也，而又何羡乎！且夫天地之间，物各有主，苟非吾之所有，虽一毫而莫取。惟江上之清风，与山间之明月，耳得之而为声，目遇之而成色，取之无禁，用之不竭。是造物者之无尽藏也，而吾与子之所共适。」</p>
+          <p>客喜而笑，洗盏更酌。肴核既尽，杯盘狼籍。相与枕藉乎舟中，不知东方之既白。</p>
+        </div>
+      </div>
+      <div class="prose-foot">
+        <p class="poem-note">同年十月，他又与客夜游赤壁，作《后赤壁赋》。此处录前赋全篇，据《苏轼文集》通行本。文中「冯虚」通「凭虚」，「狼籍」一作「狼藉」。</p>
+        <span class="seal" aria-hidden="true">東坡</span>
+      </div>
+    </article>
+
+    <article class="poem reveal flip">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(18px,1.85vw,24px)">
+            <div class="stanza">
+              <p>夜饮东坡醒复醉，归来仿佛三更。</p>
+              <p>家童鼻息已雷鸣。</p>
+              <p>敲门都不应，倚杖听江声。</p>
+            </div>
+            <div class="stanza">
+              <p>长恨此身非我有，何时忘却营营。</p>
+              <p>夜阑风静縠纹平。</p>
+              <p>小舟从此逝，江海寄余生。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>词 · 临江仙</span><i></i><span>元丰五年</span><i></i><span>1082</span></p>
+          <h3 class="poem-title">夜饮东坡醒复醉</h3>
+          <p class="poem-note">夜饮东坡，醉归临皋，家童睡熟，敲门不应，他便倚杖听江声。据宋人笔记，此词传出后，人们以为他真的要「小舟从此逝」，郡守急忙去看，他却在酣睡。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- 文 · 记承天寺夜游 -->
+    <article class="prose ji reveal">
+      <div class="prose-head">
+        <div class="prose-id">
+          <p class="prose-chip"><b>文</b><span>记</span></p>
+          <p class="poem-kicker"><span>元丰六年 十月十二日</span><i></i><span>1083</span><i></i><span>黄州</span></p>
+          <h3 class="poem-title">记承天寺夜游</h3>
+        </div>
+        <p class="prose-aside">八十五个字，没有故事，只有月光、竹柏的影子，和两个睡不着的人。</p>
+      </div>
+      <div class="ji-stage">
+        <div class="ji-yard" aria-hidden="true">
+          <i class="ji-moon"></i>
+          <i class="ji-shadow"></i>
+          <i class="ji-shadow s2"></i>
+        </div>
+        <div class="ji-card">
+          <div class="ji-text">
+            <p>元丰六年十月十二日夜，解衣欲睡，月色入户，欣然起行。</p>
+            <p>念无与为乐者，遂至承天寺寻张怀民。怀民亦未寝，相与步于中庭。</p>
+            <p>庭下如积水空明，水中藻、荇交横，盖竹柏影也。</p>
+            <p>何夜无月？何处无竹柏？但少闲人如吾两人者耳。</p>
+          </div>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+      <p class="poem-note ji-note">元丰六年，苏轼仍在黄州。张怀民那时也寓居黄州。这一夜没有发生什么，他只是把看见的写了下来。</p>
+    </article>
+  </section>
+
+  <!-- 第三章 -->
+  <section class="chapter" id="ch3" data-chapter="ch3" data-ambient="#1e1d19">
+    <header class="chapter-head">
+      <div class="ch-num reveal">03</div>
+      <div style="grid-area:title">
+        <h2 class="ch-title reveal"><small>1084 — 1093 · 庐山 / 杭州</small>庐山</h2>
+        <p class="ch-quote reveal" style="--d:60ms">不识庐山真面目，只缘身在此山中。</p>
+      </div>
+      <p class="ch-desc reveal" style="--d:120ms">元丰七年，离开黄州，量移汝州。途中游庐山、访石钟山。元祐年间回朝，官至翰林学士，又再度出知杭州，疏浚西湖，筑起苏堤。此间的诗，多了几分通透。</p>
+      <p class="ch-coord reveal">29.55°N 115.98°E<br>LUSHAN</p>
+    </header>
+
+    <article class="poem reveal">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(22px,2.35vw,31px)">
+            <div class="stanza">
+              <p>横看成岭侧成峰，远近高低各不同。</p>
+              <p>不识庐山真面目，只缘身在此山中。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>七绝</span><i></i><span>元丰七年</span><i></i><span>1084</span></p>
+          <h3 class="poem-title">题西林壁</h3>
+          <p class="poem-note">这年四月，苏轼离开黄州，量移汝州。途中游庐山，在西林寺壁上题下此诗。看山的人，最后承认自己看不见山的全貌。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="poem reveal flip">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(21px,2.25vw,30px)">
+            <div class="stanza">
+              <p>荷尽已无擎雨盖，菊残犹有傲霜枝。</p>
+              <p>一年好景君须记，最是橙黄橘绿时。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>七绝</span><i></i><span>元祐五年</span><i></i><span>1090</span></p>
+          <h3 class="poem-title">赠刘景文</h3>
+          <p class="poem-note">刘景文名季孙，时任两浙兵马都监，年近六十仍不得志。苏轼视他为「慷慨奇士」，以此诗相赠。橙黄橘绿，是初冬，也是人生的晚秋。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- 第四章 -->
+  <section class="chapter" id="ch4" data-chapter="ch4" data-ambient="#241a14">
+    <header class="chapter-head">
+      <div class="ch-num reveal">04</div>
+      <div style="grid-area:title">
+        <h2 class="ch-title reveal"><small>1094 — 1100 · 惠州 / 儋州</small>岭南</h2>
+        <p class="ch-quote reveal" style="--d:60ms">九死南荒吾不恨，兹游奇绝冠平生。</p>
+      </div>
+      <p class="ch-desc reveal" style="--d:120ms">绍圣元年贬惠州，三年后（绍圣四年）再贬儋州。渡海那年，他已年过六十。在儋州三年，他办学、注书、与当地人往来，把流放活成了一场远游。</p>
+      <p class="ch-coord reveal">23.11°N 114.42°E<br>HUIZHOU</p>
+    </header>
+
+    <article class="poem reveal">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(22px,2.35vw,31px)">
+            <div class="stanza">
+              <p>罗浮山下四时春，卢橘杨梅次第新。</p>
+              <p>日啖荔枝三百颗，不辞长作岭南人。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>七绝</span><i></i><span>绍圣三年</span><i></i><span>1096</span></p>
+          <h3 class="poem-title">食荔枝<span>其二</span></h3>
+          <p class="poem-note">原为两首，此为第二首，后世亦题作《惠州一绝》。惠州是贬所，他却写成了美食与风土。「不辞长作岭南人」，一半是自嘲，一半是真话。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="poem reveal flip">
+      <div class="poem-inner">
+        <div class="verse-wrap">
+          <div class="verse" style="--fs:clamp(20px,2.1vw,28px)">
+            <div class="stanza">
+              <p>参横斗转欲三更，苦雨终风也解晴。</p>
+              <p>云散月明谁点缀？天容海色本澄清。</p>
+              <p>空余鲁叟乘桴意，粗识轩辕奏乐声。</p>
+              <p>九死南荒吾不恨，兹游奇绝冠平生。</p>
+            </div>
+          </div>
+        </div>
+        <div class="poem-aside">
+          <p class="poem-kicker"><span>七律</span><i></i><span>元符三年</span><i></i><span>1100</span></p>
+          <h3 class="poem-title">六月二十日夜渡海</h3>
+          <p class="poem-note">这年正月，哲宗去世，徽宗即位，大赦天下，苏轼得以从儋州量移廉州。六月二十日夜，他渡海北归。「九死南荒吾不恨」——前后谪居岭海约六年半，他给了一个出人意料的总结。</p>
+          <span class="seal" aria-hidden="true">東坡</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- 互动 -->
+  <section class="ask" id="ask">
+    <div class="ask-inner">
+      <p class="kicker reveal">互动 · 四问</p>
+      <h2 class="ask-title reveal" style="--d:80ms">若你也在路上</h2>
+      <p class="ask-lead reveal" style="--d:140ms">四个处境，每次从三句苏轼里挑一句。挑完，你会得到一张只属于这次选择的句谱——它不预测什么，只是把你选过的句子排在一起。</p>
+      <div class="ask-actions reveal" style="--d:200ms">
+        <button class="btn btn--solid" id="askStart">开始四问</button>
+      </div>
+      <p class="ask-meta reveal" style="--d:260ms">四问 · 十六句 · 皆出苏轼原作</p>
+    </div>
+  </section>
+
+  <!-- 终章 -->
+  <section class="coda" id="coda" data-chapter="coda" data-ambient="#1c1913">
+    <div class="coda-inner">
+      <p class="coda-kicker reveal">建中靖国元年 · 1101 · 镇江金山寺</p>
+      <div class="coda-poem reveal" style="--d:80ms">
+        <div class="stanza">
+          <p>心似已灰之木，</p>
+          <p>身如不系之舟。</p>
+        </div>
+        <div class="stanza">
+          <p>问汝平生功业，</p>
+          <p>黄州惠州儋州。</p>
+        </div>
+      </div>
+      <div class="coda-places reveal" style="--d:160ms">
+        <a class="coda-place" href="#ch2"><b>黄州</b><span>1080 — 1084</span></a>
+        <a class="coda-place" href="#ch4"><b>惠州</b><span>1094 — 1097</span></a>
+        <a class="coda-place" href="#ch4"><b>儋州</b><span>1097 — 1100</span></a>
+      </div>
+      <p class="coda-text reveal" style="--d:220ms">北归途中，他在金山寺见到自己的画像，题下这六言四句。同年七月，卒于常州，年六十六。他一生被贬三次，走过大半个中国，最终没能回到眉山。</p>
+      <div class="coda-actions reveal" style="--d:280ms">
+        <button class="btn btn--solid" id="openDraw">拈一枚诗签</button>
+        <button class="btn" id="quizFromCoda">东坡四问</button>
+        <button class="btn" id="shareAll">存一张长图</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-inner">
+      <div>
+        <p class="foot-mark">东坡 · 苏轼诗词展</p>
+        <p>诗作录自通行本，个别字句各家版本略有出入，不另出校记。</p>
+      </div>
+      <p>线上展览 · 仅作展示<br>1037 — 1101</p>
+    </div>
+  </footer>
+</main>
+
+<!-- 诗签 -->
+<div class="draw" id="draw" role="dialog" aria-modal="true" aria-labelledby="drawLine" aria-hidden="true">
+  <div class="draw-card">
+    <button class="draw-close" id="drawClose" aria-label="关闭">×</button>
+    <p class="draw-label">東坡詩籤 · 隨機一句</p>
+    <p class="draw-line" id="drawLine"></p>
+    <p class="draw-src" id="drawSrc"></p>
+    <span class="seal draw-seal" aria-hidden="true">東坡</span>
+    <div class="draw-actions">
+      <button id="drawAgain">再拈一枚</button>
+      <button id="drawShare">分享此句</button>
+    </div>
+  </div>
+</div>
+
+<!-- 长图 -->
+<div class="share" id="share" role="dialog" aria-modal="true" aria-hidden="true" aria-label="生成长图">
+  <div class="share-panel">
+    <div class="share-top">
+      <span>长图 · <b id="shareScope">单首</b></span>
+      <button class="share-close" id="shareClose" aria-label="关闭">×</button>
+    </div>
+    <div class="share-stage" id="shareStage">
+      <p class="share-status" id="shareStatus">正在排版…</p>
+      <img id="shareImg" alt="东坡诗词长图" hidden>
+    </div>
+    <div class="share-actions">
+      <button class="btn btn--solid" id="shareSave">保存到相册</button>
+      <a class="btn" id="shareOpen" href="#" target="_blank" rel="noopener">新窗口打开</a>
+    </div>
+    <p class="share-tip" id="shareTip">iPhone 若未弹出保存菜单，可长按上方图片 →「存储到照片」；在微信内请先选「在浏览器中打开」。</p>
+  </div>
+</div>
+
+<!-- 四问 -->
+<div class="quiz" id="quiz" role="dialog" aria-modal="true" aria-hidden="true" aria-label="东坡四问">
+  <div class="quiz-card">
+    <button class="quiz-close" id="quizClose" aria-label="关闭">×</button>
+    <div class="quiz-inner" id="quizInner"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $  = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
+
+  /* ---------- 顶栏 / 进度 ---------- */
+  const topbar = $('#topbar');
+  const root = document.documentElement;
+  let ticking = false;
+
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      topbar.classList.toggle('scrolled', y > 40);
+      const max = root.scrollHeight - window.innerHeight;
+      root.style.setProperty('--progress', max > 0 ? Math.min(1, y / max).toFixed(4) : 0);
+      ticking = false;
+    });
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- 进场 ---------- */
+  const revealEls = $$('.reveal');
+  if ('IntersectionObserver' in window && !reduceMotion) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    revealEls.forEach((el) => io.observe(el));
+  } else {
+    revealEls.forEach((el) => el.classList.add('in'));
+  }
+
+  /* ---------- 章节高亮 / 环境色 ---------- */
+  const chapters = $$('[data-chapter]');
+  const ambient = $('.ambient');
+  const railLinks = $$('.rail a');
+
+  const setChapter = (id) => {
+    railLinks.forEach((a) => a.classList.toggle('active', a.dataset.rail === id));
+    const target = chapters.find((c) => c.dataset.chapter === id);
+    if (target && ambient) ambient.style.background = target.dataset.ambient || '#1b2427';
+  };
+
+  if ('IntersectionObserver' in window) {
+    const chIO = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) setChapter(e.target.dataset.chapter);
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    chapters.forEach((c) => chIO.observe(c));
+  }
+  setChapter('prologue');
+
+  /* ---------- 目次 ---------- */
+  const menu = $('#menu');
+  const menuBtn = $('#menuBtn');
+  let menuOpen = false;
+
+  const setMenu = (open) => {
+    menuOpen = open;
+    menu.classList.toggle('open', open);
+    menu.setAttribute('aria-hidden', String(!open));
+    menuBtn.setAttribute('aria-expanded', String(open));
+    document.body.classList.toggle('lock', open);
+  };
+
+  menuBtn.addEventListener('click', () => setMenu(!menuOpen));
+
+  $$('[data-nav]').forEach((a) => {
+    a.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const target = a.getAttribute('href');
+      setMenu(false);
+      window.setTimeout(() => {
+        const el = document.querySelector(target);
+        if (el) el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      }, 220);
+    });
+  });
+
+  /* ---------- 诗签 ---------- */
+  const lines = [
+    { t: '人生如逆旅，我亦是行人。', s: '临江仙 · 送钱穆父' },
+    { t: '但愿人长久，千里共婵娟。', s: '水调歌头 · 明月几时有' },
+    { t: '一蓑烟雨任平生。', s: '定风波 · 莫听穿林打叶声' },
+    { t: '回首向来萧瑟处，归去，也无风雨也无晴。', s: '定风波 · 莫听穿林打叶声' },
+    { t: '十年生死两茫茫，不思量，自难忘。', s: '江城子 · 乙卯正月二十日夜记梦' },
+    { t: '不识庐山真面目，只缘身在此山中。', s: '题西林壁' },
+    { t: '人间有味是清欢。', s: '浣溪沙 · 细雨斜风作晓寒' },
+    { t: '此心安处是吾乡。', s: '定风波 · 南海归赠王定国侍人寓娘' },
+    { t: '小舟从此逝，江海寄余生。', s: '临江仙 · 夜饮东坡醒复醉' },
+    { t: '人生到处知何似，应似飞鸿踏雪泥。', s: '和子由渑池怀旧' },
+    { t: '谁道人生无再少？门前流水尚能西。', s: '浣溪沙 · 游蕲水清泉寺' },
+    { t: '九死南荒吾不恨，兹游奇绝冠平生。', s: '六月二十日夜渡海' },
+    { t: '问汝平生功业，黄州惠州儋州。', s: '自题金山画像' },
+    { t: '枝上柳绵吹又少，天涯何处无芳草。', s: '蝶恋花 · 春景' }
+  ];
+
+  const draw = $('#draw');
+  const drawLine = $('#drawLine');
+  const drawSrc = $('#drawSrc');
+  const toastEl = $('#toast');
+  let lastIdx = -1;
+  let toastTimer = null;
+  let lastFocus = null;
+
+  const toast = (msg) => {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  };
+
+  const pick = () => {
+    let i = Math.floor(Math.random() * lines.length);
+    if (lines.length > 1 && i === lastIdx) i = (i + 1) % lines.length;
+    lastIdx = i;
+    const item = lines[i];
+    drawLine.textContent = '';
+    drawSrc.textContent = '';
+    // 按句读断行，逐字浮现
+    const parts = item.t.split(/(?<=[，。？])/).filter(Boolean);
+    let k = 0;
+    parts.forEach((part, pi) => {
+      Array.from(part).forEach((ch) => {
+        const span = document.createElement('span');
+        span.textContent = ch;
+        span.style.opacity = '0';
+        span.style.transition = 'opacity .5s ease ' + (k * 0.035 + 0.08) + 's';
+        drawLine.appendChild(span);
+        k += 1;
+      });
+      if (pi < parts.length - 1) drawLine.appendChild(document.createElement('br'));
+    });
+    drawSrc.textContent = '—— 苏轼《' + item.s + '》';
+    requestAnimationFrame(() => {
+      Array.from(drawLine.children).forEach((s) => { s.style.opacity = '1'; });
+    });
+    draw.dataset.text = item.t;
+    draw.dataset.src = item.s;
+  };
+
+  const setDraw = (open) => {
+    draw.classList.toggle('open', open);
+    draw.setAttribute('aria-hidden', String(!open));
+    document.body.classList.toggle('lock', open || menuOpen);
+    if (open) {
+      lastFocus = document.activeElement;
+      pick();
+      setTimeout(() => $('#drawAgain').focus(), 380);
+    } else if (lastFocus) {
+      lastFocus.focus();
+    }
+  };
+
+  $('#openDraw').addEventListener('click', () => setDraw(true));
+  $('#drawClose').addEventListener('click', () => setDraw(false));
+  $('#drawAgain').addEventListener('click', pick);
+  draw.addEventListener('click', (e) => { if (e.target === draw) setDraw(false); });
+
+  const shareText = async (text) => {
+    const payload = { title: '东坡 · 苏轼诗词展', text, url: location.href };
+    if (navigator.share) {
+      try { await navigator.share(payload); return; } catch (e) { /* 用户取消则回退 */ }
+    }
+    try {
+      await navigator.clipboard.writeText(text + '\n—— 东坡 · 苏轼诗词展\n' + location.href);
+      toast('已复制，去分享吧');
+    } catch (e) {
+      toast('复制失败，请手动选择文字');
+    }
+  };
+
+  $('#drawShare').addEventListener('click', () => {
+    shareText(draw.dataset.text + ' —— 苏轼《' + draw.dataset.src + '》');
+  });
+
+  const shareBtn = $('#shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => {
+      shareText('一蓑烟雨任平生。十五首诗词，从眉山到儋州。');
+    });
+  }
+
+  /* ---------- 键盘 ---------- */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (draw.classList.contains('open')) setDraw(false);
+    else if (menuOpen) setMenu(false);
+  });
+
+  /* ---------- 首屏视差 ---------- */
+  const hero = $('.hero');
+  if (hero && !reduceMotion && window.matchMedia('(pointer:fine)').matches) {
+    let raf = null, tx = 0, ty = 0;
+    hero.addEventListener('mousemove', (e) => {
+      const r = hero.getBoundingClientRect();
+      tx = (e.clientX - r.left) / r.width - 0.5;
+      ty = (e.clientY - r.top) / r.height - 0.5;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        root.style.setProperty('--mx', tx.toFixed(3));
+        root.style.setProperty('--my', ty.toFixed(3));
+        raf = null;
+      });
+    });
+  }
+
+  /* ---------- 雾 / 微尘 ---------- */
+  const canvas = $('#mist');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let w = 0, h = 0, dpr = 1;
+    let blobs = [];
+    let dots = [];
+    let raf = null;
+    let visible = true;
+    let t0 = performance.now();
+
+    const sprite = (() => {
+      const size = 256;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const g = c.getContext('2d');
+      const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+      grad.addColorStop(0, 'rgba(206,216,214,.55)');
+      grad.addColorStop(.42, 'rgba(180,196,198,.20)');
+      grad.addColorStop(.72, 'rgba(160,180,186,.06)');
+      grad.addColorStop(1, 'rgba(150,170,176,0)');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, size, size);
+      return c;
+    })();
+
+    const build = () => {
+      blobs = Array.from({ length: 16 }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 70 + Math.random() * 150,
+        a: 0.022 + Math.random() * 0.045,
+        vy: 0.06 + Math.random() * 0.14,
+        ph: Math.random() * Math.PI * 2,
+        sp: 0.03 + Math.random() * 0.06
+      }));
+      dots = Array.from({ length: 54 }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 0.4 + Math.random() * 1,
+        a: 0.05 + Math.random() * 0.16,
+        vy: 0.04 + Math.random() * 0.12,
+        ph: Math.random() * Math.PI * 2
+      }));
+    };
+
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      build();
+    };
+
+    const frame = (now) => {
+      const t = (now - t0) / 1000;
+      ctx.clearRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (const b of blobs) {
+        const y = ((b.y - t * b.vy) % (h + b.r * 2) + h + b.r * 2) % (h + b.r * 2) - b.r;
+        const x = b.x + Math.sin(t * b.sp + b.ph) * 30;
+        ctx.globalAlpha = b.a;
+        ctx.drawImage(sprite, x - b.r, y - b.r, b.r * 2, b.r * 2);
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+      for (const d of dots) {
+        const y = ((d.y - t * d.vy) % (h + 20) + h + 20) % (h + 20) - 10;
+        const x = d.x + Math.sin(t * 0.16 + d.ph) * 12;
+        ctx.globalAlpha = d.a;
+        ctx.fillStyle = '#e6dfcd';
+        ctx.beginPath();
+        ctx.arc(x, y, d.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      if (visible) raf = requestAnimationFrame(frame);
+    };
+
+    resize();
+    window.addEventListener('resize', () => { cancelAnimationFrame(raf); resize(); raf = requestAnimationFrame(frame); });
+
+    if (reduceMotion) {
+      // 静态渲染一帧雾气
+      for (const b of blobs) {
+        ctx.globalAlpha = b.a;
+        ctx.drawImage(sprite, b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);
+      }
+    } else {
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver((entries) => {
+          const vis = entries[0].isIntersecting;
+          if (vis && !visible) { visible = true; t0 = performance.now(); raf = requestAnimationFrame(frame); }
+          if (!vis && visible) { visible = false; cancelAnimationFrame(raf); }
+        }, { threshold: 0 }).observe(hero);
+      }
+      raf = requestAnimationFrame(frame);
+    }
+  }
+})();
+</script>
+
+<script>
+/* ============================================================
+   四问 · 借一句
+   所有句子均出自苏轼原作，出处与年份随句标注
+   ============================================================ */
+(() => {
+  'use strict';
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let tT = 0;
+  function toast(msg) {
+    const el = $('#toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(tT);
+    tT = setTimeout(() => el.classList.remove('show'), 2600);
+  }
+
+  /* ---------- 题与句 ---------- */
+  const PROMPTS = [
+    {
+      kicker: '一问 · 夜',
+      q: '深夜，睡不着。',
+      sub: '三句里，你更想拿哪一句陪自己坐一会儿？',
+      lines: [
+        { t: '缺月挂疏桐，漏断人初静。', s: '卜算子 · 黄州定慧院寓居作', y: '1080', th: 'kuang' },
+        { t: '明月几时有？把酒问青天。', s: '水调歌头 · 明月几时有', y: '1076', th: 'nian' },
+        { t: '人生到处知何似，应似飞鸿踏雪泥。', s: '和子由渑池怀旧', y: '1061', th: 'guan' },
+        { t: '参横斗转欲三更，苦雨终风也解晴。', s: '六月二十日夜渡海', y: '1100', th: 'du' }
+      ]
+    },
+    {
+      kicker: '二问 · 行',
+      q: '要出远门了。',
+      sub: '临行前，你想把哪一句放进行囊？',
+      lines: [
+        { t: '人生如逆旅，我亦是行人。', s: '临江仙 · 送钱穆父', y: '1091', th: 'kuang' },
+        { t: '但愿人长久，千里共婵娟。', s: '水调歌头 · 明月几时有', y: '1076', th: 'nian' },
+        { t: '不识庐山真面目，只缘身在此山中。', s: '题西林壁', y: '1084', th: 'guan' },
+        { t: '九死南荒吾不恨，兹游奇绝冠平生。', s: '六月二十日夜渡海', y: '1100', th: 'du' }
+      ]
+    },
+    {
+      kicker: '三问 · 路',
+      q: '路看不清了。',
+      sub: '此刻，哪一句更像你愿意相信的话？',
+      lines: [
+        { t: '莫听穿林打叶声，何妨吟啸且徐行。', s: '定风波 · 莫听穿林打叶声', y: '1082', th: 'kuang' },
+        { t: '谁道人生无再少？门前流水尚能西。', s: '浣溪沙 · 游蕲水清泉寺', y: '1082', th: 'kuang' },
+        { t: '横看成岭侧成峰，远近高低各不同。', s: '题西林壁', y: '1084', th: 'guan' },
+        { t: '云散月明谁点缀？天容海色本澄清。', s: '六月二十日夜渡海', y: '1100', th: 'du' }
+      ]
+    },
+    {
+      kicker: '四问 · 回望',
+      q: '回头看这些年。',
+      sub: '如果只能留一句作注脚，你留哪一句？',
+      lines: [
+        { t: '人生如梦，一尊还酹江月。', s: '念奴娇 · 赤壁怀古', y: '1082', th: 'kuang' },
+        { t: '夜来幽梦忽还乡，小轩窗，正梳妆。', s: '江城子 · 乙卯正月二十日夜记梦', y: '1075', th: 'nian' },
+        { t: '问汝平生功业，黄州惠州儋州。', s: '自题金山画像', y: '1101', th: 'guan' },
+        { t: '日啖荔枝三百颗，不辞长作岭南人。', s: '食荔枝 · 其二', y: '1096', th: 'du' }
+      ]
+    }
+  ];
+
+  const THEMES = {
+    kuang: {
+      name: '徐行的人', tag: '旷',
+      read: (n) => `四次里，有 ${n} 次你选了不着急、也不躲开的句子。他写这些句子时，多半正在雨里、夜里或贬所——不是没有难处，是不肯让难处替他做决定。`
+    },
+    nian: {
+      name: '记着的人', tag: '念',
+      read: (n) => `四次里，有 ${n} 次你选了回头看的句子。苏轼写思念从不绕开：亡妻、兄弟、朋友，他都直说「我想你」。记得本身，就是他的抵抗。`
+    },
+    guan: {
+      name: '看山的人', tag: '观',
+      read: (n) => `四次里，有 ${n} 次你选了「换个位置看」的句子。庐山、雪泥、平生功业，他都是把自己挪远一点再看——距离让事情显出它真正的样子。`
+    },
+    du: {
+      name: '渡海的人', tag: '渡',
+      read: (n) => `四次里，有 ${n} 次你选了从难处里抬头的句子。岭南七年，北归渡海时他说「九死南荒吾不恨」——不是忘了苦，是不肯让苦成为最后的结论。`
+    }
+  };
+
+  const CN = ['一', '二', '三', '四'];
+  const state = { step: 0, pool: [], picks: [] };
+
+  const shuffle = (arr) => {
+    const b = arr.slice();
+    for (let i = b.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = b[i]; b[i] = b[j]; b[j] = t;
+    }
+    return b;
+  };
+
+  function reset() {
+    state.step = 0;
+    state.picks = [];
+    state.pool = PROMPTS.map((p) => shuffle(p.lines).slice(0, 3));
+  }
+
+  function lockBody() {
+    document.body.classList.toggle('lock',
+      $('#quiz').classList.contains('open') || $('#share').classList.contains('open'));
+  }
+
+  function openQuiz() {
+    reset();
+    $('#quiz').classList.add('open');
+    $('#quiz').setAttribute('aria-hidden', 'false');
+    lockBody();
+    renderIntro();
+  }
+
+  function closeQuiz() {
+    $('#quiz').classList.remove('open');
+    $('#quiz').setAttribute('aria-hidden', 'true');
+    lockBody();
+  }
+
+  function swap(fn) {
+    const box = $('#quizInner');
+    if (REDUCE) { fn(); return; }
+    box.classList.add('swap');
+    setTimeout(() => { fn(); box.classList.remove('swap'); }, 170);
+  }
+
+  function renderIntro() {
+    $('#quizInner').innerHTML = `
+      <div class="quiz-bar"><i class="on"></i><i></i><i></i><i></i><span>四问</span></div>
+      <p class="quiz-kicker">东坡问心</p>
+      <h3 class="quiz-q">四次处境，借四句东坡。</h3>
+      <div class="quiz-intro">
+        <p>每一问给三句苏轼原作，你挑此刻最想带走的一句。四问之后，会得到一张只属于这次选择的句谱——它不判断你，只把你选过的句子排在一起。</p>
+        <p>句子都出自他的诗词，出处与年份随句标注。每一问出现的三句并不固定，换一遍会换一批。</p>
+      </div>
+      <div class="quiz-start">
+        <button type="button" class="btn btn--solid" data-act="start">开始</button>
+      </div>`;
+  }
+
+  function renderStep() {
+    const p = PROMPTS[state.step];
+    const opts = state.pool[state.step];
+    const dots = CN.map((_, i) => `<i class="${i <= state.step ? 'on' : ''}"></i>`).join('');
+    $('#quizInner').innerHTML = `
+      <div class="quiz-bar">${dots}<span>${CN[state.step]} / 四</span></div>
+      <p class="quiz-kicker">${p.kicker}</p>
+      <h3 class="quiz-q">${p.q}</h3>
+      <p class="quiz-sub">${p.sub}</p>
+      <div class="quiz-opts">
+        ${opts.map((l, i) => `<button type="button" class="quiz-opt" data-i="${i}">${l.t}<em>${l.s} · ${l.y}</em></button>`).join('')}
+      </div>`;
+  }
+
+  function resultOf() {
+    const counts = { kuang: 0, nian: 0, guan: 0, du: 0 };
+    state.picks.forEach((l) => { counts[l.th] += 1; });
+    const last = state.picks[state.picks.length - 1].th;
+    let key = last;
+    Object.keys(counts).forEach((k) => { if (counts[k] > counts[key]) key = k; });
+    return { key, n: counts[key], counts, theme: THEMES[key] };
+  }
+
+  function renderResult() {
+    const r = resultOf();
+    $('#quizInner').innerHTML = `
+      <div class="quiz-bar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><span>四问 · 所得</span></div>
+      <p class="quiz-kicker">你的句谱</p>
+      <h3 class="quiz-result-name">${r.theme.name}</h3>
+      <p class="quiz-result-tag">${r.theme.tag} · 四问中 ${r.n} 次</p>
+      <ul class="quiz-picks">
+        ${state.picks.map((l, i) => `<li><b>0${i + 1}</b><span>${l.t}<em>${l.s} · ${l.y}</em></span></li>`).join('')}
+      </ul>
+      <p class="quiz-read">${r.theme.read(r.n)}</p>
+      <div class="quiz-actions">
+        <button type="button" class="btn btn--solid" data-act="poster">存成一张</button>
+        <button type="button" class="btn" data-act="again">再借四句</button>
+      </div>`;
+  }
+
+  $('#quizInner').addEventListener('click', (e) => {
+    const opt = e.target.closest('.quiz-opt');
+    if (opt) {
+      const i = Number(opt.dataset.i);
+      const line = state.pool[state.step][i];
+      state.picks.push({ ...line, k: PROMPTS[state.step].kicker, q: PROMPTS[state.step].q });
+      if (state.step < PROMPTS.length - 1) {
+        state.step += 1;
+        swap(renderStep);
+      } else {
+        swap(renderResult);
+      }
+      return;
+    }
+    const act = e.target.closest('[data-act]');
+    if (!act) return;
+    if (act.dataset.act === 'start') swap(renderStep);
+    if (act.dataset.act === 'again') { reset(); swap(renderIntro); }
+    if (act.dataset.act === 'poster') openQuizPoster(resultOf());
+  });
+
+  /* ---------- 长图基础 ---------- */
+  const CW = 1080;
+  const PAD = 84;
+  const INNER = 40;
+  const INK = '#2b2620';
+  const F_SONG = '"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif';
+  const F_KAI = '"Kaiti SC","STKaiti","KaiTi","Noto Serif CJK SC",serif';
+  const F_SANS = '"PingFang SC","Hiragino Sans GB","Helvetica Neue",Arial,sans-serif';
+
+  let grainTile = null;
+  let shareURL = null;
+  let shareFile = null;
+  let shareName = 'dongpo.png';
+
+  function paper(ctx, w, h) {
+    const g = ctx.createLinearGradient(0, 0, w * 0.72, h);
+    g.addColorStop(0, '#f0e9d8');
+    g.addColorStop(0.52, '#e8e0cd');
+    g.addColorStop(1, '#dcd1b8');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    if (!grainTile) {
+      const t = document.createElement('canvas');
+      t.width = 160; t.height = 160;
+      const tg = t.getContext('2d');
+      const img = tg.createImageData(160, 160);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const v = 60 + Math.random() * 50;
+        img.data[i] = v;
+        img.data[i + 1] = v * 0.93;
+        img.data[i + 2] = v * 0.82;
+        img.data[i + 3] = Math.random() < 0.5 ? 16 : 0;
+      }
+      tg.putImageData(img, 0, 0);
+      grainTile = t;
+    }
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = ctx.createPattern(grainTile, 'repeat');
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+
+    const rg = ctx.createRadialGradient(w * 0.42, h * 0.3, 0, w * 0.5, h * 0.42, Math.max(w, h) * 0.78);
+    rg.addColorStop(0, 'rgba(255,251,238,.20)');
+    rg.addColorStop(1, 'rgba(110,90,60,.10)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = 'rgba(60,50,36,.32)';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(INNER + 0.5, INNER + 0.5, w - INNER * 2 - 1, h - INNER * 2 - 1);
+    ctx.strokeStyle = 'rgba(60,50,36,.12)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(INNER + 8.5, INNER + 8.5, w - INNER * 2 - 17, h - INNER * 2 - 17);
+  }
+
+  function drawSpaced(ctx, str, x, y, gap, align) {
+    const chars = Array.from(str);
+    let total = 0;
+    chars.forEach((c) => { total += ctx.measureText(c).width + gap; });
+    total -= gap;
+    let cx = align === 'right' ? x - total : x;
+    ctx.textAlign = 'left';
+    chars.forEach((c) => {
+      ctx.fillText(c, cx, y);
+      cx += ctx.measureText(c).width + gap;
+    });
+  }
+
+  function head(ctx, w, right) {
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(56,46,33,.86)';
+    ctx.font = '500 24px ' + F_SONG;
+    drawSpaced(ctx, '東坡 · 蘇軾詩詞展', PAD + 4, PAD + 50, 8);
+    ctx.fillStyle = 'rgba(56,46,33,.45)';
+    ctx.font = '13px ' + F_SANS;
+    drawSpaced(ctx, right, w - PAD - 4, PAD + 50, 4, 'right');
+    ctx.fillStyle = 'rgba(56,46,33,.30)';
+    ctx.fillRect(PAD + 4, PAD + 68, w - PAD * 2 - 8, 1);
+    ctx.fillStyle = 'rgba(56,46,33,.14)';
+    ctx.fillRect(PAD + 4, PAD + 72, w - PAD * 2 - 8, 1);
+  }
+
+  function foot(ctx, w, h, right) {
+    const y = h - PAD;
+    ctx.fillStyle = 'rgba(56,46,33,.24)';
+    ctx.fillRect(PAD + 4, y - 44, w - PAD * 2 - 8, 1);
+    const s = 34;
+    const mx = PAD + 4;
+    const my = y - 32;
+    ctx.strokeStyle = 'rgba(56,46,33,.34)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(mx + 0.5, my + 0.5, s, s);
+    ctx.fillStyle = 'rgba(56,46,33,.5)';
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        if ((r * 7 + c * 5 + 3) % 7 < 2) ctx.fillRect(mx + 3 + c * 4, my + 3 + r * 4, 2.2, 2.2);
+      }
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = 'rgba(56,46,33,.72)';
+    ctx.font = '13px ' + F_SANS;
+    ctx.fillText('东坡 · 苏轼诗词展', mx + s + 12, my + 15);
+    ctx.fillStyle = 'rgba(56,46,33,.42)';
+    ctx.font = '9px ' + F_SANS;
+    drawSpaced(ctx, 'DONGPO · 1037—1101', mx + s + 12, my + 30, 2.4);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(56,46,33,.42)';
+    ctx.font = '10px ' + F_SANS;
+    ctx.fillText(right, w - PAD - 4, y - 8);
+  }
+
+  function seal(ctx, x, y, s) {
+    ctx.save();
+    ctx.translate(x + s / 2, y + s / 2);
+    ctx.rotate(-0.035);
+    ctx.fillStyle = '#a83a2c';
+    ctx.fillRect(-s / 2, -s / 2, s, s);
+    ctx.strokeStyle = 'rgba(255,248,236,.55)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-s / 2 + 4, -s / 2 + 4, s - 8, s - 8);
+    ctx.fillStyle = '#f9f1e2';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = Math.round(s * 0.3) + 'px ' + F_SONG;
+    ctx.fillText('東', 0, -s * 0.17);
+    ctx.fillText('坡', 0, s * 0.19);
+    ctx.restore();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function wrap(ctx, text, maxW, font) {
+    ctx.font = font;
+    const out = [];
+    let line = '';
+    Array.from(text).forEach((ch) => {
+      const test = line + ch;
+      if (line && ctx.measureText(test).width > maxW && !'，。、；：！？）」』'.includes(ch)) {
+        out.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    });
+    if (line) out.push(line);
+    return out;
+  }
+
+  /* ---------- 句谱海报 ---------- */
+  function posterQuiz(r) {
+    const m = document.createElement('canvas').getContext('2d');
+    const quoteFont = '400 30px ' + F_SONG;
+    const blocks = state.picks.map((l) => ({
+      l,
+      lines: wrap(m, l.t, CW - PAD * 2 - 70, quoteFont)
+    }));
+    const readFont = '20px ' + F_KAI;
+    const readLines = wrap(m, r.theme.read(r.n), CW - PAD * 2 - 50, readFont);
+
+    let y = PAD + 72 + 50;
+    y += 44;
+    y += 104;
+    y += 80;
+    const laid = blocks.map((b) => {
+      const h = 54 + b.lines.length * 48 + 30 + 26;
+      const top = y;
+      y += h;
+      return { b, top, h };
+    });
+    y += 24;
+    const readTop = y;
+    y += readLines.length * 34 + 30;
+    const H = Math.max(1360, y + 150);
+
+    const c = document.createElement('canvas');
+    c.width = CW; c.height = H;
+    const ctx = c.getContext('2d');
+    paper(ctx, CW, H);
+    head(ctx, CW, '四问 · 所得');
+
+    ctx.fillStyle = 'rgba(60,50,36,.55)';
+    ctx.font = '12px ' + F_SANS;
+    drawSpaced(ctx, '東坡问心 · 四问', PAD + 4, PAD + 72 + 50, 6);
+
+    ctx.fillStyle = INK;
+    ctx.font = '500 76px ' + F_SONG;
+    ctx.textAlign = 'left';
+    ctx.fillText(r.theme.name, PAD + 2, PAD + 72 + 50 + 44 + 78);
+
+    ctx.fillStyle = '#a83a2c';
+    ctx.font = '12px ' + F_SANS;
+    drawSpaced(ctx, `${r.theme.tag} · 四问中 ${r.n} 次`, PAD + 4, PAD + 72 + 50 + 44 + 104 + 34, 4);
+
+    seal(ctx, CW - PAD - 70, PAD + 172, 54);
+
+    laid.forEach(({ b, top, h }, i) => {
+      ctx.font = '13px ' + F_SANS;
+      ctx.fillStyle = 'rgba(60,50,36,.42)';
+      ctx.textAlign = 'left';
+      drawSpaced(ctx, String(i + 1).padStart(2, '0'), PAD + 4, top + 18, 1.5);
+      ctx.fillStyle = 'rgba(60,50,36,.52)';
+      ctx.fillText(b.l.k + ' · ' + b.l.q, PAD + 40, top + 18);
+
+      ctx.font = quoteFont;
+      ctx.fillStyle = INK;
+      b.lines.forEach((ln, k) => ctx.fillText(ln, PAD + 54, top + 54 + k * 48));
+
+      ctx.font = '12px ' + F_SANS;
+      ctx.fillStyle = 'rgba(60,50,36,.48)';
+      ctx.fillText(`${b.l.s} · ${b.l.y}`, PAD + 54, top + 54 + b.lines.length * 48 + 20);
+
+      ctx.fillStyle = 'rgba(60,50,36,.13)';
+      ctx.fillRect(PAD + 54, top + h - 10, CW - PAD * 2 - 54, 1);
+    });
+
+    ctx.font = readFont;
+    ctx.fillStyle = 'rgba(56,46,33,.78)';
+    readLines.forEach((ln, i) => ctx.fillText(ln, PAD + 4, readTop + 26 + i * 34));
+
+    ctx.font = '11px ' + F_SANS;
+    ctx.fillStyle = 'rgba(56,46,33,.4)';
+    drawSpaced(ctx, '句皆出苏轼原作 · 东坡诗词展', PAD + 4, H - PAD - 74, 3);
+
+    foot(ctx, CW, H, '四问 · 苏轼诗词展');
+    return c;
+  }
+
+  /* ---------- 长图弹层 ---------- */
+  function openPanel(tag) {
+    $('#shareScope').textContent = tag;
+    $('#shareImg').hidden = true;
+    $('#shareStatus').hidden = false;
+    $('#shareStatus').textContent = '正在排版…';
+    $('#share').classList.add('open');
+    $('#share').setAttribute('aria-hidden', 'false');
+    lockBody();
+  }
+
+  function closePanel() {
+    $('#share').classList.remove('open');
+    $('#share').setAttribute('aria-hidden', 'true');
+    lockBody();
+  }
+
+  function showCanvas(canvas, name) {
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          $('#shareStatus').textContent = '生成失败，请重试';
+          return;
+        }
+        if (shareURL) URL.revokeObjectURL(shareURL);
+        shareURL = URL.createObjectURL(blob);
+        shareFile = new File([blob], name + '.png', { type: 'image/png' });
+        shareName = name + '.png';
+        const img = $('#shareImg');
+        img.src = shareURL;
+        img.hidden = false;
+        $('#shareOpen').href = shareURL;
+        $('#shareStatus').hidden = true;
+      }, 'image/png');
+    } catch (err) {
+      $('#shareStatus').textContent = '生成失败，请重试';
+    }
+  }
+
+  function openQuizPoster(r) {
+    openPanel('四问 · 句谱');
+    setTimeout(() => showCanvas(posterQuiz(r), 'dongpo-sipian'), 90);
+  }
+
+  async function saveImage() {
+    if (!shareFile) return;
+    if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+      try {
+        await navigator.share({ files: [shareFile], title: '东坡 · 苏轼诗词展' });
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+      }
+    }
+    const touchMac = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    if (/iP(hone|ad|od)/.test(navigator.userAgent) || touchMac) {
+      window.open(shareURL, '_blank');
+      toast('已在新窗口打开图片，长按保存到相册');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = shareURL;
+    a.download = shareName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('已开始下载；若没有保存，请长按图片');
+  }
+
+  function setTip() {
+    const ua = navigator.userAgent;
+    const tip = $('#shareTip');
+    if (/MicroMessenger/i.test(ua)) {
+      tip.textContent = '微信内请点右上角「…」，选「在浏览器中打开」，再点保存或长按图片。';
+    } else if (/iP(hone|ad|od)/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+      tip.textContent = 'iPhone：点「保存到相册」会弹出分享菜单，选「存储图像」；若没弹出，点「新窗口打开」，在新页面长按图片 →「存储到照片」。';
+    } else {
+      tip.textContent = '点「保存到相册」下载图片；手机端也可长按图片保存。';
+    }
+  }
+
+  /* ---------- 长图 · 单首 / 整幕 / 全展 ---------- */
+  const plain = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+
+  const poemTitleOf = (el) => {
+    if (!el) return '';
+    return Array.from(el.childNodes)
+      .map((n) => n.textContent.replace(/\s+/g, ' ').trim())
+      .filter(Boolean).join(' ');
+  };
+
+  const kickerParts = (el) => (el ? Array.from(el.querySelectorAll('span')).map((s) => s.textContent.trim()) : []);
+
+  const sectionNameOf = (el) => {
+    const sec = el.closest('.chapter, .prologue, .coda');
+    if (!sec) return '';
+    if (sec.id === 'prologue') return '雪泥';
+    if (sec.id === 'coda') return '归';
+    const t = sec.querySelector('.ch-title');
+    if (!t) return '';
+    const copy = t.cloneNode(true);
+    const small = copy.querySelector('small');
+    if (small) small.remove();
+    return copy.textContent.trim();
+  };
+
+  function collectPoemData(article) {
+    return {
+      title: poemTitleOf(article.querySelector('.poem-title')),
+      meta: kickerParts(article.querySelector('.poem-kicker')).join(' · '),
+      note: plain(article.querySelector('.poem-note')),
+      stanzas: Array.from(article.querySelectorAll('.verse .stanza')).map((st) =>
+        Array.from(st.querySelectorAll('p')).map((p) => p.textContent.trim())
+      )
+    };
+  }
+
+  function collectRelicData(sec) {
+    const info = sec.querySelector('.relic-info');
+    return {
+      title: poemTitleOf(info && info.querySelector('.poem-title')),
+      meta: kickerParts(info && info.querySelector('.poem-kicker')).join(' · '),
+      note: plain(info && info.querySelector('.poem-note')),
+      stanzas: [Array.from(sec.querySelectorAll('.relic-verse p'))
+        .map((p) => p.textContent.trim())
+        .filter((t) => t && t !== '东坡居士')]
+    };
+  }
+
+  function collectCodaData(sec) {
+    return {
+      title: '自题金山画像',
+      meta: '六言 · 建中靖国元年 · 1101',
+      note: plain(sec.querySelector('.coda-text')),
+      stanzas: Array.from(sec.querySelectorAll('.coda-poem .stanza')).map((st) =>
+        Array.from(st.querySelectorAll('p')).map((p) => p.textContent.trim())
+      )
+    };
+  }
+
+  function collectSectionData(sec) {
+    let poems = [];
+    if (sec.id === 'coda') {
+      poems = [collectCodaData(sec)];
+    } else {
+      Array.from(sec.querySelectorAll('article.poem, section.relic')).forEach((el) => {
+        poems.push(el.classList.contains('relic') ? collectRelicData(el) : collectPoemData(el));
+      });
+    }
+    return {
+      label: sec.id === 'prologue' ? '序' : sec.id === 'coda' ? '终'
+        : (sec.querySelector('.ch-num') ? sec.querySelector('.ch-num').textContent.trim() : ''),
+      name: sectionNameOf(sec),
+      range: plain(sec.querySelector('.ch-title small')) || (sec.id === 'prologue' ? '1037 — 1061' : ''),
+      quote: plain(sec.querySelector('.ch-quote')),
+      poems
+    };
+  }
+
+  /* 单首：竖版，标题 / 诗句 / 注释 / 落款 */
+  function drawSingle(ctx, p, secName, dry) {
+    const m = ctx;
+    let y = PAD + 118;
+    if (!dry) {
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'rgba(60,50,36,.55)';
+      ctx.font = '13px ' + F_SANS;
+      drawSpaced(ctx, p.meta, PAD + 4, y, 3);
+    }
+    y += 38;
+
+    const tF = '500 60px ' + F_SONG;
+    const tls = wrap(m, p.title, CW - PAD * 2 - 40, tF);
+    if (!dry) {
+      ctx.fillStyle = INK;
+      ctx.font = tF;
+      tls.forEach((ln, i) => ctx.fillText(ln, PAD + 2, y + 58 + i * 80));
+    }
+    y += tls.length * 80 + 4;
+
+    if (!dry) {
+      ctx.fillStyle = 'rgba(60,50,36,.28)';
+      ctx.fillRect(PAD + 2, y + 12, 92, 1);
+      ctx.fillStyle = 'rgba(60,50,36,.14)';
+      ctx.fillRect(PAD + 2, y + 17, CW - PAD * 2 - 4, 1);
+    }
+    y += 80;
+
+    const vF = '400 35px ' + F_SONG;
+    const maxW = CW - PAD * 2 - 80;
+    p.stanzas.forEach((st, si) => {
+      if (si) y += 34;
+      st.forEach((line) => {
+        wrap(m, line, maxW, vF).forEach((ln) => {
+          if (!dry) {
+            ctx.fillStyle = INK;
+            ctx.font = vF;
+            ctx.textAlign = 'center';
+            ctx.fillText(ln, CW / 2, y);
+            ctx.textAlign = 'left';
+          }
+          y += 60;
+        });
+      });
+    });
+
+    y += 46;
+    if (p.note) {
+      const nF = '18px ' + F_KAI;
+      const nls = wrap(m, p.note, CW - PAD * 2 - 200, nF);
+      if (!dry) {
+        ctx.fillStyle = 'rgba(56,46,33,.72)';
+        ctx.font = nF;
+        nls.forEach((ln, i) => ctx.fillText(ln, PAD + 56, y + i * 34));
+      }
+      y += nls.length * 34;
+    }
+
+    y += 58;
+    if (!dry) {
+      ctx.fillStyle = 'rgba(56,46,33,.45)';
+      ctx.font = '12px ' + F_SANS;
+      drawSpaced(ctx, '东坡 · ' + (secName || '诗词'), PAD + 56, y, 4);
+      seal(ctx, CW - PAD - 94, y - 58, 62);
+    }
+    return y + 26;
+  }
+
+  /* 整幕 / 全展：一幕或多幕，逐首排版 */
+  function drawSections(ctx, secs, opt, dry) {
+    const m = ctx;
+    let y = PAD + 118;
+    if (!dry) {
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'rgba(60,50,36,.5)';
+      ctx.font = '12px ' + F_SANS;
+      drawSpaced(ctx, opt.kicker, PAD + 4, y, 5);
+    }
+    y += 36;
+
+    const hF = '500 54px ' + F_SONG;
+    const hls = wrap(m, opt.title, CW - PAD * 2 - 40, hF);
+    if (!dry) {
+      ctx.fillStyle = INK;
+      ctx.font = hF;
+      hls.forEach((ln, i) => ctx.fillText(ln, PAD + 2, y + 50 + i * 72));
+    }
+    y += hls.length * 72 + 6;
+
+    if (!dry) {
+      ctx.fillStyle = 'rgba(60,50,36,.2)';
+      ctx.fillRect(PAD + 2, y + 12, CW - PAD * 2 - 4, 1);
+    }
+    y += 58;
+
+    secs.forEach((sec, si) => {
+      if (si) y += 56;
+      if (opt.group) {
+        if (!dry) {
+          ctx.fillStyle = 'rgba(60,50,36,.45)';
+          ctx.font = '11px ' + F_SANS;
+          drawSpaced(ctx, [sec.label, sec.range].filter(Boolean).join(' · '), PAD + 4, y, 4);
+        }
+        y += 30;
+        if (!dry) {
+          ctx.fillStyle = INK;
+          ctx.font = '500 40px ' + F_SONG;
+          ctx.fillText(sec.name, PAD + 2, y + 40);
+        }
+        y += 88;
+        if (sec.quote) {
+          const qF = '19px ' + F_KAI;
+          const qls = wrap(m, sec.quote, CW - PAD * 2 - 20, qF);
+          if (!dry) {
+            ctx.fillStyle = 'rgba(168,58,44,.82)';
+            ctx.font = qF;
+            qls.forEach((ln, i) => ctx.fillText(ln, PAD + 4, y + i * 30));
+          }
+          y += qls.length * 30;
+        }
+        y += 44;
+      } else if (sec.range || sec.quote) {
+        if (!dry) {
+          ctx.fillStyle = 'rgba(60,50,36,.45)';
+          ctx.font = '11px ' + F_SANS;
+          drawSpaced(ctx, sec.range, PAD + 4, y, 4);
+        }
+        y += 28;
+        if (sec.quote) {
+          const qF = '20px ' + F_KAI;
+          const qls = wrap(m, sec.quote, CW - PAD * 2 - 20, qF);
+          if (!dry) {
+            ctx.fillStyle = 'rgba(168,58,44,.82)';
+            ctx.font = qF;
+            qls.forEach((ln, i) => ctx.fillText(ln, PAD + 4, y + i * 32));
+          }
+          y += qls.length * 32;
+        }
+        y += 40;
+      }
+
+      sec.poems.forEach((p, pi) => {
+        if (pi) y += 38;
+        if (!dry) {
+          ctx.fillStyle = 'rgba(60,50,36,.38)';
+          ctx.font = '12px ' + F_SANS;
+          drawSpaced(ctx, String(pi + 1).padStart(2, '0'), PAD + 4, y, 1.5);
+          ctx.fillText(p.meta, PAD + 44, y);
+        }
+        y += 34;
+        if (!dry) {
+          ctx.fillStyle = INK;
+          ctx.font = '500 32px ' + F_SONG;
+          ctx.fillText(p.title, PAD + 44, y + 30);
+        }
+        y += 74;
+
+        const vF = '400 26px ' + F_SONG;
+        p.stanzas.forEach((st, s2) => {
+          if (s2) y += 26;
+          st.forEach((line) => {
+            wrap(m, line, CW - PAD * 2 - 130, vF).forEach((ln) => {
+              if (!dry) {
+                ctx.fillStyle = 'rgba(43,38,32,.92)';
+                ctx.font = vF;
+                ctx.fillText(ln, PAD + 86, y);
+              }
+              y += 44;
+            });
+          });
+        });
+
+        if (p.note) {
+          y += 12;
+          const nF = '15px ' + F_KAI;
+          const nls = wrap(m, p.note, CW - PAD * 2 - 140, nF);
+          const show = nls.slice(0, 3);
+          if (!dry) {
+            ctx.fillStyle = 'rgba(60,50,36,.62)';
+            ctx.font = nF;
+            show.forEach((ln, i) => {
+              const more = i === show.length - 1 && nls.length > 3 ? '…' : '';
+              ctx.fillText(ln + more, PAD + 86, y + i * 26);
+            });
+          }
+          y += show.length * 26;
+        }
+        y += 20;
+        if (!dry) {
+          ctx.fillStyle = 'rgba(60,50,36,.12)';
+          ctx.fillRect(PAD + 44, y, CW - PAD * 2 - 48, 1);
+        }
+        y += 8;
+      });
+    });
+
+    y += 40;
+    if (!dry) {
+      ctx.fillStyle = 'rgba(60,50,36,.42)';
+      ctx.font = '11px ' + F_SANS;
+      drawSpaced(ctx, '东坡 · 苏轼诗词展 · 1037—1101', PAD + 4, y, 3);
+      seal(ctx, CW - PAD - 96, y - 46, 58);
+    }
+    return y + 26;
+  }
+
+  function sheet(builder, used, opt) {
+    const H = Math.max(opt.minH || 1280, used + 176);
+    const c = document.createElement('canvas');
+    c.width = CW;
+    c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.textBaseline = 'alphabetic';
+    paper(ctx, CW, H);
+    builder(ctx, false);
+    head(ctx, CW, opt.right);
+    foot(ctx, CW, H, opt.foot);
+    return c;
+  }
+
+  function makeSinglePosterOf(p, name) {
+    const probe = document.createElement('canvas').getContext('2d');
+    const used = drawSingle(probe, p, name, true);
+    return sheet((ctx, dry) => drawSingle(ctx, p, name, dry), used, {
+      right: '单首 · ' + (name || '诗词'),
+      foot: '单首 · 苏轼诗词展'
+    });
+  }
+
+  function makeSinglePoster(article) {
+    return makeSinglePosterOf(collectPoemData(article), sectionNameOf(article));
+  }
+
+  function makeSectionPoster(secs, opt) {
+    const probe = document.createElement('canvas').getContext('2d');
+    const used = drawSections(probe, secs, opt, true);
+    return sheet((ctx, dry) => drawSections(ctx, secs, opt, dry), used, opt);
+  }
+
+  function safeName(s) {
+    return (s || 'dongpo').replace(/[\\/:*?"<>|\s·]/g, '').slice(0, 18) || 'dongpo';
+  }
+
+  function openSingle(article) {
+    openPanel('单首 · ' + (sectionNameOf(article) || '东坡'));
+    setTimeout(() => {
+      try {
+        showCanvas(makeSinglePoster(article), 'dongpo-' + safeName(poemTitleOf(article.querySelector('.poem-title'))));
+      } catch (err) {
+        $('#shareStatus').textContent = '生成失败，请重试';
+      }
+    }, 90);
+  }
+
+  function openSingleData(p, name, file) {
+    openPanel('单首 · ' + (name || '东坡'));
+    setTimeout(() => {
+      try {
+        showCanvas(makeSinglePosterOf(p, name), 'dongpo-' + safeName(file || p.title));
+      } catch (err) {
+        $('#shareStatus').textContent = '生成失败，请重试';
+      }
+    }, 90);
+  }
+
+  function openChapter(sec) {
+    const data = collectSectionData(sec);
+    openPanel('整幕 · ' + data.name);
+    setTimeout(() => {
+      try {
+        showCanvas(makeSectionPoster([data], {
+          kicker: '長卷 · 選幕',
+          title: data.name,
+          group: false,
+          right: '整幕 · ' + data.name + ' · ' + data.poems.length + ' 首',
+          foot: data.name + ' · 苏轼诗词展'
+        }), 'dongpo-' + safeName(data.name));
+      } catch (err) {
+        $('#shareStatus').textContent = '生成失败，请重试';
+      }
+    }, 90);
+  }
+
+  function openAll() {
+    const secs = [$('#prologue')].concat($$('.chapter')).concat([$('#coda')])
+      .filter(Boolean).map(collectSectionData);
+    const total = secs.reduce((n, s) => n + s.poems.length, 0);
+    openPanel('全展 · ' + total + ' 首');
+    setTimeout(() => {
+      try {
+        showCanvas(makeSectionPoster(secs, {
+          kicker: '長卷 · 全展',
+          title: '十五首诗词 · 两篇文',
+          group: true,
+          right: '全展 · ' + total + ' 首',
+          foot: '全展 · 苏轼诗词展'
+        }), 'dongpo-quanzhan');
+      } catch (err) {
+        $('#shareStatus').textContent = '生成失败，请重试';
+      }
+    }, 90);
+  }
+
+  function mountPosterButtons() {
+    $$('article.poem').forEach((art) => {
+      const aside = art.querySelector('.poem-aside');
+      if (!aside || aside.querySelector('.work-actions')) return;
+      const box = document.createElement('div');
+      box.className = 'work-actions';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mini-btn';
+      btn.dataset.poster = 'poem';
+      btn.innerHTML = '<i aria-hidden="true"></i>存单首';
+      box.appendChild(btn);
+      aside.appendChild(box);
+    });
+    $$('.chapter').forEach((sec) => {
+      const title = sec.querySelector('.ch-title');
+      if (!title) return;
+      const host = title.parentElement;
+      if (host.querySelector('.ch-actions')) return;
+      const box = document.createElement('div');
+      box.className = 'ch-actions';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mini-btn';
+      btn.dataset.poster = 'chapter';
+      btn.innerHTML = '<i aria-hidden="true"></i>存整幕';
+      box.appendChild(btn);
+      host.appendChild(box);
+    });
+    $$('section.relic').forEach((sec) => {
+      const info = sec.querySelector('.relic-info');
+      if (!info || info.querySelector('.work-actions')) return;
+      const box = document.createElement('div');
+      box.className = 'work-actions';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mini-btn';
+      btn.dataset.poster = 'relic';
+      btn.innerHTML = '<i aria-hidden="true"></i>存单首';
+      box.appendChild(btn);
+      info.appendChild(box);
+    });
+    const codaActions = $('.coda-actions');
+    if (codaActions && !codaActions.querySelector('[data-poster=coda]')) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn';
+      btn.dataset.poster = 'coda';
+      btn.textContent = '存这一首';
+      codaActions.appendChild(btn);
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-poster]');
+    if (!btn) return;
+    const kind = btn.dataset.poster;
+    if (kind === 'poem') {
+      const art = btn.closest('article.poem');
+      if (art) openSingle(art);
+    } else if (kind === 'chapter') {
+      const sec = btn.closest('.chapter');
+      if (sec) openChapter(sec);
+    } else if (kind === 'relic') {
+      const sec = btn.closest('section.relic');
+      if (sec) openSingleData(collectRelicData(sec), sectionNameOf(sec), '黄州寒食诗帖');
+    } else if (kind === 'coda') {
+      const sec = btn.closest('.coda');
+      if (sec) openSingleData(collectCodaData(sec), '归', '自题金山画像');
+    }
+  });
+
+  mountPosterButtons();
+
+  /* ---------- 挂载 ---------- */
+  $('#askStart').addEventListener('click', openQuiz);
+  $('#quizFromCoda').addEventListener('click', openQuiz);
+  $('#quizClose').addEventListener('click', closeQuiz);
+  $('#quiz').addEventListener('click', (e) => { if (e.target === $('#quiz')) closeQuiz(); });
+  $('#shareClose').addEventListener('click', closePanel);
+  $('#share').addEventListener('click', (e) => { if (e.target === $('#share')) closePanel(); });
+  $('#shareSave').addEventListener('click', saveImage);
+  $('#shareAll').addEventListener('click', openAll);
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if ($('#share').classList.contains('open')) closePanel();
+    else if ($('#quiz').classList.contains('open')) closeQuiz();
+  });
+  setTip();
+
+  if (location.hash === '#dev') {
+    window.__dp = { openQuiz, resultOf, posterQuiz, state };
+  }
+})();
+</script>
+</body>
+</html>
