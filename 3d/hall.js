@@ -75,8 +75,8 @@
   renderer.shadowMap.enabled = false;
 
   var scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x070809);
-  scene.fog = new THREE.Fog(0x08090a, 17, 42);
+  scene.background = new THREE.Color(0x0e1215);
+  scene.fog = new THREE.Fog(0x11171a, 22, 56);
 
   var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 80);
   camera.rotation.order = 'YXZ';
@@ -189,12 +189,15 @@
 
     speckle(ctx, W, H, 900, '90,84,68', 0.05);
 
-    ctx.strokeStyle = 'rgba(146,118,76,.42)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(20, 20, W - 40, H - 40);
+    ctx.strokeStyle = 'rgba(210,174,110,.85)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(18, 18, W - 36, H - 36);
+    ctx.strokeStyle = 'rgba(255,235,192,.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(24, 24, W - 48, H - 48);
     ctx.strokeStyle = 'rgba(146,118,76,.18)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(29, 29, W - 58, H - 58);
+    ctx.strokeRect(31, 31, W - 62, H - 62);
 
     var title = item.title + (item.subtitle ? '·' + item.subtitle : '');
     var tChars = Array.from(title);
@@ -332,20 +335,38 @@
   function wallTexture(chapter) {
     var W = 512, H = 512;
     var nc = newCanvas(W, H), c = nc[0], ctx = nc[1];
-    ctx.fillStyle = '#23262a';
+    ctx.fillStyle = '#363d47';
     ctx.fillRect(0, 0, W, H);
 
     var amb = ctx.createRadialGradient(W * 0.5, H * 0.34, 20, W * 0.5, H * 0.34, W * 0.85);
-    amb.addColorStop(0, chapterGlow(chapter.id, 0.9));
+    amb.addColorStop(0, chapterGlow(chapter.id, 1));
     amb.addColorStop(1, chapterGlow(chapter.id, 0));
     ctx.fillStyle = amb;
     ctx.fillRect(0, 0, W, H);
 
     var warm = ctx.createRadialGradient(W * 0.5, H * 0.3, 10, W * 0.5, H * 0.3, W * 0.7);
-    warm.addColorStop(0, 'rgba(255,226,180,.08)');
+    warm.addColorStop(0, 'rgba(255,226,180,.2)');
     warm.addColorStop(1, 'rgba(255,226,180,0)');
     ctx.fillStyle = warm;
     ctx.fillRect(0, 0, W, H);
+
+    // 顶部灯槽：墙面自上而下的洗墙光
+    var cove = ctx.createLinearGradient(0, 0, 0, H * 0.3);
+    cove.addColorStop(0, 'rgba(255,214,160,.34)');
+    cove.addColorStop(0.4, 'rgba(255,214,160,.12)');
+    cove.addColorStop(1, 'rgba(255,214,160,0)');
+    ctx.fillStyle = cove;
+    ctx.fillRect(0, 0, W, H * 0.3);
+    ctx.fillStyle = 'rgba(255,236,198,.5)';
+    ctx.fillRect(0, 24, W, 2);
+
+    // 底部灯槽：从地面向上溢出的暖光
+    var foot = ctx.createLinearGradient(0, H, 0, H * 0.72);
+    foot.addColorStop(0, 'rgba(255,206,150,.22)');
+    foot.addColorStop(0.5, 'rgba(255,206,150,.06)');
+    foot.addColorStop(1, 'rgba(255,206,150,0)');
+    ctx.fillStyle = foot;
+    ctx.fillRect(0, H * 0.72, W, H * 0.28);
 
     function ridge(baseY, amp, color, phase) {
       ctx.beginPath();
@@ -360,8 +381,8 @@
       ctx.fillStyle = color;
       ctx.fill();
     }
-    ridge(H * 0.74, 34, 'rgba(0,0,0,.26)', 0.6);
-    ridge(H * 0.8, 22, 'rgba(0,0,0,.34)', 2.1);
+    ridge(H * 0.74, 34, 'rgba(0,0,0,.2)', 0.6);
+    ridge(H * 0.8, 22, 'rgba(0,0,0,.26)', 2.1);
 
     for (var i = 0; i < 70; i++) {
       ctx.fillStyle = 'rgba(255,240,210,.012)';
@@ -369,26 +390,26 @@
     }
     speckle(ctx, W, H, 700, '230,220,200', 0.035);
 
-    ctx.fillStyle = 'rgba(199,172,124,.22)';
-    ctx.fillRect(0, H - 60, W, 1.5);
-    ctx.fillStyle = 'rgba(199,172,124,.1)';
+    ctx.fillStyle = 'rgba(199,172,124,.46)';
+    ctx.fillRect(0, H - 60, W, 2);
+    ctx.fillStyle = 'rgba(199,172,124,.16)';
     ctx.fillRect(0, H - 16, W, 1);
-    ctx.fillStyle = 'rgba(199,172,124,.08)';
+    ctx.fillStyle = 'rgba(199,172,124,.14)';
     ctx.fillRect(0, 34, W, 1);
 
     var edge = ctx.createLinearGradient(0, 0, W, 0);
-    edge.addColorStop(0, 'rgba(0,0,0,.5)');
+    edge.addColorStop(0, 'rgba(0,0,0,.34)');
     edge.addColorStop(0.18, 'rgba(0,0,0,0)');
     edge.addColorStop(0.82, 'rgba(0,0,0,0)');
-    edge.addColorStop(1, 'rgba(0,0,0,.5)');
+    edge.addColorStop(1, 'rgba(0,0,0,.34)');
     ctx.fillStyle = edge;
     ctx.fillRect(0, 0, W, H);
 
     var top = ctx.createLinearGradient(0, 0, 0, H);
-    top.addColorStop(0, 'rgba(0,0,0,.4)');
+    top.addColorStop(0, 'rgba(0,0,0,.26)');
     top.addColorStop(0.35, 'rgba(0,0,0,0)');
-    top.addColorStop(0.8, 'rgba(0,0,0,.1)');
-    top.addColorStop(1, 'rgba(0,0,0,.45)');
+    top.addColorStop(0.8, 'rgba(0,0,0,.05)');
+    top.addColorStop(1, 'rgba(0,0,0,.28)');
     ctx.fillStyle = top;
     ctx.fillRect(0, 0, W, H);
 
@@ -398,12 +419,12 @@
   function floorTexture() {
     var W = 1024;
     var nc = newCanvas(W, W), c = nc[0], ctx = nc[1];
-    ctx.fillStyle = '#1b1d20';
+    ctx.fillStyle = '#252b33';
     ctx.fillRect(0, 0, W, W);
     var g = ctx.createRadialGradient(W * 0.5, W * 0.5, 30, W * 0.5, W * 0.5, W * 0.55);
-    g.addColorStop(0, 'rgba(74,62,46,.4)');
-    g.addColorStop(0.3, 'rgba(46,40,32,.2)');
-    g.addColorStop(0.55, 'rgba(26,26,27,.08)');
+    g.addColorStop(0, 'rgba(112,90,58,.46)');
+    g.addColorStop(0.3, 'rgba(58,49,38,.26)');
+    g.addColorStop(0.55, 'rgba(30,30,32,.1)');
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, W);
@@ -411,19 +432,19 @@
     for (var i = 0; i < 90; i++) {
       var x = Math.random() * W, y = Math.random() * W, r = 20 + Math.random() * 90;
       var rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-      var light = Math.random() > 0.45;
-      rg.addColorStop(0, light ? 'rgba(255,248,235,.022)' : 'rgba(0,0,0,.07)');
+      var light = Math.random() > 0.4;
+      rg.addColorStop(0, light ? 'rgba(255,248,235,.05)' : 'rgba(0,0,0,.09)');
       rg.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = rg;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
     }
-    ctx.strokeStyle = 'rgba(199,172,124,.09)';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(212,180,124,.32)';
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(W / 2, W / 2, W * 0.34, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(199,172,124,.055)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(224,196,142,.22)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(W / 2, W / 2, W * 0.17, 0, Math.PI * 2);
     ctx.stroke();
@@ -435,13 +456,13 @@
     var W = 512;
     var nc = newCanvas(W, W), c = nc[0], ctx = nc[1];
     var g = ctx.createRadialGradient(W / 2, W / 2, 10, W / 2, W / 2, W * 0.58);
-    g.addColorStop(0, '#332b1e');
-    g.addColorStop(0.35, '#1b1813');
-    g.addColorStop(1, '#08090a');
+    g.addColorStop(0, '#5b4830');
+    g.addColorStop(0.35, '#2b2419');
+    g.addColorStop(1, '#0c0e10');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, W);
     for (var i = 0; i < 40; i++) {
-      ctx.strokeStyle = 'rgba(199,172,124,.02)';
+      ctx.strokeStyle = 'rgba(214,180,120,.05)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(W / 2, W / 2, 40 + i * 6, 0, Math.PI * 2);
@@ -454,19 +475,28 @@
     var W = 512;
     var nc = newCanvas(W, W), c = nc[0], ctx = nc[1];
     var g = ctx.createRadialGradient(W / 2, W * 0.42, 4, W / 2, W * 0.42, W * 0.52);
-    g.addColorStop(0, '#33434a');
-    g.addColorStop(0.4, '#18242a');
-    g.addColorStop(1, '#0a0f12');
+    g.addColorStop(0, '#55798a');
+    g.addColorStop(0.4, '#254049');
+    g.addColorStop(1, '#0d1a20');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, W);
     var streak = ctx.createLinearGradient(0, 0, 0, W);
     streak.addColorStop(0, 'rgba(255,236,200,0)');
-    streak.addColorStop(0.35, 'rgba(255,236,200,.14)');
-    streak.addColorStop(0.62, 'rgba(255,236,200,.05)');
+    streak.addColorStop(0.3, 'rgba(255,238,205,.32)');
+    streak.addColorStop(0.55, 'rgba(255,240,210,.42)');
+    streak.addColorStop(0.72, 'rgba(255,236,200,.12)');
     streak.addColorStop(1, 'rgba(255,236,200,0)');
     ctx.fillStyle = streak;
     ctx.fillRect(W * 0.38, 0, W * 0.24, W);
-    speckle(ctx, W, W, 600, '210,230,230', 0.05);
+    // 涟漪
+    for (var r = 1; r <= 5; r++) {
+      ctx.strokeStyle = 'rgba(206,232,240,' + (0.12 - r * 0.016) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(W / 2, W * 0.42, 26 + r * 32, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    speckle(ctx, W, W, 600, '210,230,230', 0.07);
     return tex(c);
   }
 
@@ -474,9 +504,9 @@
     var W = 512, H = 1024;
     var nc = newCanvas(W, H), c = nc[0], ctx = nc[1];
     var g = ctx.createLinearGradient(0, 0, W * 0.4, H);
-    g.addColorStop(0, '#38362f');
-    g.addColorStop(0.55, '#2c2b27');
-    g.addColorStop(1, '#232220');
+    g.addColorStop(0, '#44423a');
+    g.addColorStop(0.55, '#363530');
+    g.addColorStop(1, '#2b2a26');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
     speckle(ctx, W, H, 1900, '220,210,190', 0.05);
@@ -484,7 +514,7 @@
       ctx.fillStyle = 'rgba(0,0,0,.05)';
       ctx.fillRect(0, Math.random() * H, W, 0.7 + Math.random() * 1.4);
     }
-    ctx.strokeStyle = 'rgba(220,205,170,.14)';
+    ctx.strokeStyle = 'rgba(220,205,170,.22)';
     ctx.lineWidth = 2;
     ctx.strokeRect(26, 26, W - 52, H - 52);
 
@@ -495,7 +525,7 @@
     ctx.textBaseline = 'middle';
     ctx.fillText('建 中 靖 国 元 年 · 1101', W / 2, 100);
 
-    drawVert(ctx, item.title, W - 84, 150, 44, 'rgba(230,216,186,.88)');
+    drawVert(ctx, item.title, W - 84, 150, 44, 'rgba(240,228,200,.98)');
     var cols = [];
     item.snippet.forEach(function (ln) { clauses(ln).forEach(function (cl) { cols.push(cl); }); });
     if (cols.length > 6) cols = cols.slice(0, 6);
@@ -503,7 +533,7 @@
     var step = cols.length >= 6 ? 48 : 52;
     var startX = W - 164;
     for (var k = 0; k < cols.length; k++) {
-      drawVert(ctx, cols[k], startX - k * step, 142, colSize, 'rgba(224,210,182,.72)');
+      drawVert(ctx, cols[k], startX - k * step, 142, colSize, 'rgba(236,224,198,.88)');
     }
     ctx.fillStyle = 'rgba(150,60,45,.9)';
     ctx.fillRect(W - 128, H - 176, 46, 46);
@@ -520,9 +550,10 @@
     var W = 128;
     var nc = newCanvas(W, W), c = nc[0], ctx = nc[1];
     var g = ctx.createRadialGradient(W / 2, W / 2, 2, W / 2, W / 2, W / 2);
-    g.addColorStop(0, 'rgba(255,224,170,.55)');
-    g.addColorStop(0.45, 'rgba(255,214,150,.18)');
-    g.addColorStop(1, 'rgba(255,214,150,0)');
+    g.addColorStop(0, 'rgba(255,228,180,.9)');
+    g.addColorStop(0.42, 'rgba(255,214,150,.3)');
+    g.addColorStop(0.72, 'rgba(255,210,146,.09)');
+    g.addColorStop(1, 'rgba(255,210,146,0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, W);
     return tex(c);
@@ -544,13 +575,14 @@
   var glowTex = glowTexture();
   var panels = [];
   var navItems = [];   // 供目录跳转
+  var proxies = [];    // 不可见拾取代理（整件展品的包围面）
 
-  var woodMat = new THREE.MeshBasicMaterial({ color: 0x2b2219 });
-  var postMat = new THREE.MeshBasicMaterial({ color: 0x26211b });
-  var goldMat = new THREE.MeshBasicMaterial({ color: 0x8d7443 });
+  var woodMat = new THREE.MeshBasicMaterial({ color: 0x43362a });
+  var postMat = new THREE.MeshBasicMaterial({ color: 0x3b3329 });
+  var goldMat = new THREE.MeshBasicMaterial({ color: 0xc9a462 });
   var glowMat = new THREE.MeshBasicMaterial({
     map: glowTex, transparent: true, blending: THREE.AdditiveBlending,
-    depthWrite: false, opacity: 0.6
+    depthWrite: false, opacity: 0.78
   });
 
   // 地面
@@ -644,6 +676,17 @@
       facing: new THREE.Vector3(-n.x, 0, -n.z),
       group: g
     };
+    // 整件展品的拾取代理：比可见挂轴略大，完全覆盖纸面与木框
+    var proxy = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.66, 2.78),
+      new THREE.MeshBasicMaterial()
+    );
+    proxy.position.set(0, 2.78, 0.07);
+    proxy.visible = false;
+    proxy.userData.rec = rec;
+    g.add(proxy);
+    proxies.push(proxy);
+
     panels.push(rec);
     navItems.push(rec);
   }
@@ -703,10 +746,23 @@
   /* ---------- 中央：终章碑 ---------- */
   var platform = new THREE.Mesh(
     new THREE.CylinderGeometry(2.95, 3.05, 0.16, 28),
-    new THREE.MeshBasicMaterial({ color: 0x0b0c0d })
+    new THREE.MeshBasicMaterial({ color: 0x070809 })
   );
   platform.position.y = 0.08;
   scene.add(platform);
+
+  // 池沿金色光环（加色叠加，制造科技感的轮廓光）
+  var rimGlow = new THREE.Mesh(
+    new THREE.RingGeometry(2.62, 3.02, 48),
+    new THREE.MeshBasicMaterial({
+      map: glowTex, color: 0xffd79a, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.55,
+      side: THREE.DoubleSide
+    })
+  );
+  rimGlow.rotation.x = -Math.PI / 2;
+  rimGlow.position.y = 0.17;
+  scene.add(rimGlow);
 
   var water = new THREE.Mesh(
     new THREE.CircleGeometry(2.72, 40),
@@ -715,6 +771,8 @@
   water.rotation.x = -Math.PI / 2;
   water.position.y = 0.165;
   scene.add(water);
+  var waterMap = water.material.map;
+  waterMap.center.set(0.5, 0.42);
 
   var codaItem = EX['e17'];
   var steleStoneMat = new THREE.MeshBasicMaterial({ color: 0x32312c });
@@ -734,11 +792,61 @@
 
   var halo = new THREE.Sprite(new THREE.SpriteMaterial({
     map: glowTex, color: 0xffe0ad, transparent: true,
-    blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.22
+    blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.38
   }));
   halo.position.set(0, 2.5, 0);
-  halo.scale.set(7, 7, 1);
+  halo.scale.set(8, 8, 1);
   scene.add(halo);
+
+  // 碑顶光柱（假体积光，一次性烘焙成竖向渐变）
+  function shaftTexture() {
+    var W = 64, H = 256;
+    var nc2 = newCanvas(W, H), c2 = nc2[0], ctx2 = nc2[1];
+    var g2 = ctx2.createLinearGradient(0, 0, 0, H);
+    g2.addColorStop(0, 'rgba(255,228,184,.55)');
+    g2.addColorStop(0.5, 'rgba(255,222,175,.16)');
+    g2.addColorStop(1, 'rgba(255,220,170,0)');
+    ctx2.fillStyle = g2;
+    ctx2.fillRect(0, 0, W, H);
+    return tex(c2);
+  }
+  var shaft = new THREE.Mesh(
+    new THREE.ConeGeometry(1.6, 6.3, 20, 1, true),
+    new THREE.MeshBasicMaterial({
+      map: shaftTexture(), color: 0xffe2b4, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+      side: THREE.DoubleSide, opacity: 0.22
+    })
+  );
+  shaft.position.y = 3.85;
+  scene.add(shaft);
+
+  // 每面墙上方的射灯辉光（Sprite，几乎不增加填充压力）
+  for (var li = 0; li < 8; li++) {
+    var la = li * Math.PI / 4;
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTex, color: 0xffe3b4, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.42
+    }));
+    sp.position.set(Math.cos(la) * (APOTHEM - 1.05), WALL_H - 0.4, Math.sin(la) * (APOTHEM - 1.05));
+    sp.scale.set(1.6, 1.6, 1);
+    scene.add(sp);
+  }
+
+  // 转角处的竖向灯带
+  var stripMat = new THREE.MeshBasicMaterial({
+    map: glowTex, color: 0xffdca6, transparent: true,
+    blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5
+  });
+  var stripGeo = new THREE.PlaneGeometry(0.07, 6.1);
+  for (var si = 0; si < 8; si++) {
+    var sa = si * Math.PI / 4 + Math.PI / 8;
+    var sn = { x: Math.cos(sa), z: Math.sin(sa) };
+    var strip = new THREE.Mesh(stripGeo, stripMat);
+    strip.position.set(sn.x * (APOTHEM - 0.02), 3.45, sn.z * (APOTHEM - 0.02));
+    strip.rotation.y = Math.atan2(-sn.x, -sn.z);
+    scene.add(strip);
+  }
 
   var moon = new THREE.Mesh(
     new THREE.CircleGeometry(1.5, 36),
@@ -769,11 +877,20 @@
     facing: new THREE.Vector3(1, 0, 0),
     group: stele
   };
+  var steleProxy = new THREE.Mesh(
+    new THREE.BoxGeometry(1.9, 3.3, 1.1),
+    new THREE.MeshBasicMaterial()
+  );
+  steleProxy.position.y = 1.9;
+  steleProxy.visible = false;
+  steleProxy.userData.rec = codaRec;
+  scene.add(steleProxy);
+  proxies.push(steleProxy);
   panels.push(codaRec);
   navItems.push(codaRec);
 
   /* ---------- 浮尘 ---------- */
-  var dustCount = 260;
+  var dustCount = 380;
   var dustGeo = new THREE.BufferGeometry();
   var dustPos = new Float32Array(dustCount * 3);
   for (var d = 0; d < dustCount; d++) {
@@ -785,8 +902,8 @@
   }
   dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
   var dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
-    size: 0.05, map: dotTexture(), color: 0xd8c9a8,
-    transparent: true, opacity: 0.4, depthWrite: false,
+    size: 0.055, map: dotTexture(), color: 0xe8d9b8,
+    transparent: true, opacity: 0.55, depthWrite: false,
     blending: THREE.AdditiveBlending, sizeAttenuation: true
   }));
   scene.add(dust);
@@ -801,6 +918,7 @@
   var readerOpen = false;
   var anim = null;
   var savedCam = null;
+  var fovTarget = 60;
   var held = { forward: false, back: false, left: false, right: false };
   var keys = {};
   var focusTimer = 0;
@@ -861,15 +979,28 @@
   function frameTarget(rec) {
     var c = rec.center;
     var f = rec.facing;
-    var camX = c.x + f.x * 3.4;
-    var camZ = c.z + f.z * 3.4;
-    var dx = c.x - camX, dz = c.z - camZ;
-    var dy = 2.45 - EYE;
+    var dist = rec.item.id === 'e17' ? 4.3 : 3.25;
+    var camX = c.x + f.x * dist;
+    var camZ = c.z + f.z * dist;
+    var dy = c.y - EYE;
     return {
       x: camX, z: camZ,
       yaw: Math.atan2(f.x, f.z),
-      pitch: Math.atan2(dy, Math.hypot(dx, dz))
+      pitch: Math.atan2(dy, dist)
     };
+  }
+
+  /* ---------- 拾取（整件展品代理，非文字网格） ---------- */
+  var raycaster = new THREE.Raycaster();
+  var pickNdc = new THREE.Vector2();
+
+  function pickExhibit(clientX, clientY) {
+    var rect = canvas.getBoundingClientRect();
+    pickNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    pickNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pickNdc, camera);
+    var hits = raycaster.intersectObjects(proxies, false);
+    return hits.length ? hits[0].object.userData.rec : null;
   }
 
   /* ---------- 近读 ---------- */
@@ -903,6 +1034,7 @@
     saved = { x: pos.x, z: pos.z, yaw: yaw, pitch: pitch };
     fillReader(rec);
     var target = frameTarget(rec);
+    fovTarget = 55;                       // 轻微推镜
     animateTo(target, 0.8, function () {
       readerEl.classList.add('open');
       readerEl.setAttribute('aria-hidden', 'false');
@@ -923,6 +1055,7 @@
     document.body.classList.remove('reading');
     readerEl.classList.remove('open');
     readerEl.setAttribute('aria-hidden', 'true');
+    fovTarget = 60;
     if (saved) {
       animateTo({ x: saved.x, z: saved.z, yaw: saved.yaw, pitch: saved.pitch }, 0.65, function () {
         saved = null;
@@ -1036,12 +1169,31 @@
     var moved = drag.moved;
     drag = null;
     canvas.classList.remove('grabbing');
-    if (!readerOpen && moved < 7 && e.type === 'pointerup') {
-      if (candidate) openReader(candidate);
-    }
+    if (readerOpen || flatMode) return;
+    if (e.type !== 'pointerup' || moved >= 7) return;
+    // 点击命中整件展品的拾取代理，直接近读
+    var hit = pickExhibit(e.clientX, e.clientY);
+    if (!hit) return;
+    var t = frameTarget(hit);
+    // 远距离点击直接落位，避免镜头穿过中央碑体
+    if (Math.hypot(t.x - pos.x, t.z - pos.z) > 6.5) teleportTo(hit);
+    else openReader(hit);
   }
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
+
+  // 悬停时给出可点击的指针反馈
+  var hoverAt = 0;
+  canvas.addEventListener('pointermove', function (e) {
+    if (drag || readerOpen || flatMode || e.pointerType === 'touch') {
+      if (!drag) canvas.classList.remove('pickable');
+      return;
+    }
+    var now = performance.now();
+    if (now - hoverAt < 80) return;
+    hoverAt = now;
+    canvas.classList.toggle('pickable', !!pickExhibit(e.clientX, e.clientY));
+  });
 
   // 触屏方向键
   Array.prototype.forEach.call(document.querySelectorAll('.dpad-btn'), function (btn) {
@@ -1294,8 +1446,16 @@
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
 
-    dust.rotation.y += dt * 0.01;
-    halo.material.opacity = 0.2 + Math.sin(clock * 0.7) * 0.025;
+    // 轻微推镜：近读时收窄视场角
+    if (camera.fov !== fovTarget) {
+      camera.fov += (fovTarget - camera.fov) * Math.min(1, dt * 5);
+      if (Math.abs(camera.fov - fovTarget) < 0.03) camera.fov = fovTarget;
+      camera.updateProjectionMatrix();
+    }
+
+    dust.rotation.y += dt * 0.03;
+    if (waterMap) waterMap.rotation += dt * 0.03;
+    halo.material.opacity = 0.38 + Math.sin(clock * 0.7) * 0.06;
 
     renderer.render(scene, camera);
   }
@@ -1327,7 +1487,121 @@
     renderer: renderer,
     panels: panels,
     state: function () {
-      return { x: pos.x, z: pos.z, yaw: yaw, pitch: pitch, candidate: candidate && candidate.item.id, readerOpen: readerOpen, flat: flatMode };
+      return { x: pos.x, z: pos.z, yaw: yaw, pitch: pitch, candidate: candidate && candidate.item.id, readerOpen: readerOpen, flat: flatMode, fov: camera.fov };
+    },
+    // 数值验证：每件展品的停靠位是否正对展品中心
+    aimAll: function () {
+      return panels.map(function (rec) {
+        var t = frameTarget(rec);
+        var fx = -Math.sin(t.yaw) * Math.cos(t.pitch);
+        var fy = Math.sin(t.pitch);
+        var fz = -Math.cos(t.yaw) * Math.cos(t.pitch);
+        var dx = rec.center.x - t.x, dy = rec.center.y - EYE, dz = rec.center.z - t.z;
+        var len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        var dot = (fx * dx + fy * dy + fz * dz) / len;
+        return {
+          id: rec.item.id,
+          dist: +len.toFixed(3),
+          errDeg: +(Math.acos(Math.min(1, Math.max(-1, dot))) * 180 / Math.PI).toFixed(3)
+        };
+      });
+    },
+    // 数值验证：站到每件展品正前方，在代理面内取中心/四边/四角共 9 点，
+    // 逐点做真实射线拾取，检查是否"点哪儿都命中自己、且只命中自己"
+    testPick: function () {
+      var rect = canvas.getBoundingClientRect();
+      var out = [];
+      panels.forEach(function (rec) {
+        var proxy = null;
+        for (var i = 0; i < proxies.length; i++) {
+          if (proxies[i].userData.rec === rec) { proxy = proxies[i]; break; }
+        }
+        if (!proxy) return;
+        var t = frameTarget(rec);
+        var oldPos = camera.position.clone();
+        var oldRot = camera.rotation.clone();
+        camera.position.set(t.x, EYE, t.z);
+        camera.rotation.set(t.pitch, t.yaw, 0);
+        camera.updateMatrixWorld(true);
+        scene.updateMatrixWorld(true);
+
+        proxy.geometry.computeBoundingBox();
+        var bb = proxy.geometry.boundingBox;
+        var hw = (bb.max.x - bb.min.x) / 2;
+        var hh = (bb.max.y - bb.min.y) / 2;
+        var local = [
+          [0, 0],
+          [-hw * 0.9, 0], [hw * 0.9, 0],
+          [0, -hh * 0.9], [0, hh * 0.9],
+          [-hw * 0.8, hh * 0.8], [hw * 0.8, hh * 0.8],
+          [-hw * 0.8, -hh * 0.8], [hw * 0.8, -hh * 0.8]
+        ];
+        var hits = local.map(function (lp) {
+          var p = new THREE.Vector3(lp[0], lp[1], 0);
+          proxy.localToWorld(p);
+          p.project(camera);
+          var sx = rect.left + (p.x * 0.5 + 0.5) * rect.width;
+          var sy = rect.top + (-p.y * 0.5 + 0.5) * rect.height;
+          var h = pickExhibit(sx, sy);
+          return h ? h.item.id : null;
+        });
+        var v = rec.center.clone().project(camera);
+        out.push({
+          id: rec.item.id,
+          centerNdc: [+v.x.toFixed(2), +v.y.toFixed(2)],
+          hits: hits
+        });
+        camera.position.copy(oldPos);
+        camera.rotation.copy(oldRot);
+        camera.updateMatrixWorld(true);
+      });
+      return out;
+    },
+    // 数值验证：走真实 pointerdown/pointerup 事件链，逐件点击展品中心，
+    // 检查近读浮层是否打开、标题是否为该件展品
+    testClick: function () {
+      var rect = canvas.getBoundingClientRect();
+      var out = [];
+      panels.forEach(function (rec) {
+        var t = frameTarget(rec);
+        var oldPos = camera.position.clone();
+        var oldRot = camera.rotation.clone();
+        camera.position.set(t.x, EYE, t.z);
+        camera.rotation.set(t.pitch, t.yaw, 0);
+        camera.updateMatrixWorld(true);
+        var p = rec.center.clone().project(camera);
+        var cx = rect.left + (p.x * 0.5 + 0.5) * rect.width;
+        var cy = rect.top + (-p.y * 0.5 + 0.5) * rect.height;
+        var opts = { pointerId: 1, pointerType: 'mouse', bubbles: true, clientX: cx, clientY: cy };
+        canvas.dispatchEvent(new PointerEvent('pointerdown', opts));
+        canvas.dispatchEvent(new PointerEvent('pointerup', opts));
+        var title = $id('readerTitle').textContent;
+        out.push({
+          id: rec.item.id,
+          opened: readerOpen,
+          title: title,
+          match: title.indexOf(rec.item.title) === 0
+        });
+        if (readerOpen) {
+          readerOpen = false;
+          document.body.classList.remove('reading');
+          readerEl.classList.remove('open');
+          readerEl.setAttribute('aria-hidden', 'true');
+        }
+        saved = null;
+        anim = null;
+        fovTarget = 60;
+        camera.fov = 60;
+        camera.updateProjectionMatrix();
+        camera.position.copy(oldPos);
+        camera.rotation.copy(oldRot);
+        camera.updateMatrixWorld(true);
+        pos.x = oldPos.x;
+        pos.z = oldPos.z;
+        yaw = oldRot.y;
+        pitch = oldRot.x;
+      });
+      return out;
     }
   };
 })();
